@@ -131,7 +131,7 @@ def build_graph_task(
     Path(kg_db).parent.mkdir(parents=True, exist_ok=True)
 
     result = build_document_graph(
-        docs[0] if docs else "",
+        docs=docs,
         force=force,
         llm=build_llm,
         structure_strategy=structure_strategy,

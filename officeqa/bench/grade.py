@@ -48,7 +48,7 @@ class JudgeVerdict(BaseModel):
 
 
 _JUDGE_SYSTEM = """\
-You are a strict-but-fair grader for FinanceBench, a financial QA benchmark.
+You are a strict-but-fair grader for OfficeQA, a benchmark on US Treasury Bulletins and government financial reports.
 Compare the agent's answer to the gold answer using the gold evidence and
 justification. Financial answers are often a number or a short factual claim.
 
@@ -347,7 +347,7 @@ def generate_markdown_report(
     )
 
     lines: list[str] = [
-        f"# FinanceBench Benchmark Report: `{profile_name}`",
+        f"# OfficeQA Benchmark Report: `{profile_name}`",
         "",
         f"- **Date**: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}",
         f"- **Agent LLM**: `{agent_llm}`",

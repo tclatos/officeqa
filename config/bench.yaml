@@ -47,7 +47,7 @@ bench_profiles:
 
     files:
       pathspecs:
-        - "*"
+        - "treasury_bulletin_2011_09*"
       limit: null
 
     agent:

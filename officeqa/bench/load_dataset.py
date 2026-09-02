@@ -123,11 +123,13 @@ def select_target_doc(df: pd.DataFrame) -> str:
 
 
 def _clean(value):
-    """Return *value* as JSON-safe: pandas/float NaN -> ``None``."""
+    """Return *value* as JSON-safe: pandas/float NaN -> ``None``, numpy ndarray -> list."""
     if value is None:
         return None
     if isinstance(value, float) and math.isnan(value):
         return None
+    if hasattr(value, "tolist"):
+        return value.tolist()
     return value
 
 
@@ -140,6 +142,14 @@ def questions_for_doc(df: pd.DataFrame, doc_name: str) -> list[dict]:
     sub = df[mask].sort_values("uid")
     rows: list[dict] = []
     for _, row in sub.iterrows():
+        raw_doc_names = row.get("doc_names")
+        if hasattr(raw_doc_names, "tolist"):
+            doc_names_list = raw_doc_names.tolist()
+        elif isinstance(raw_doc_names, (list, tuple)):
+            doc_names_list = list(raw_doc_names)
+        else:
+            doc_names_list = [clean_target]
+
         rows.append(
             {
                 "officeqa_id": str(row.get("uid", "")),
@@ -147,9 +157,9 @@ def questions_for_doc(df: pd.DataFrame, doc_name: str) -> list[dict]:
                 "question": row["question"],
                 "answer": str(row["answer"]),
                 "source_docs": _clean(row.get("source_docs")),
-                "source_files": row.get("source_files"),
+                "source_files": _clean(row.get("source_files")),
                 "doc_name": clean_target,
-                "doc_names": row.get("doc_names", [clean_target]),
+                "doc_names": doc_names_list,
                 "difficulty": _clean(row.get("difficulty")),
             }
         )

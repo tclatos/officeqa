@@ -218,8 +218,9 @@ def copy_markdown_to_project(
 
 
 def build_document_graph(
-    doc_name: str,
+    doc_name: str | None = None,
     *,
+    docs: list[str] | None = None,
     force: bool,
     llm: str | None = None,
     structure_strategy: str = "auto",
@@ -254,6 +255,16 @@ def build_document_graph(
     ensure_dirs()
     md_base = markdown_dir or MARKDOWN_DIR
     db_path = kg_db or KG_DB
+
+    target_docs = docs or ([doc_name] if doc_name else [])
+    if target_docs:
+        include_patterns: list[str] = []
+        for d in target_docs:
+            stem = Path(d).stem
+            include_patterns.extend([f"{stem}.md", f"{stem}.txt"])
+    else:
+        include_patterns = ["*.md", "*.txt"]
+
     md_files = list(md_base.glob("*.md")) + list(md_base.glob("*.txt"))
     if not md_files:
         raise SystemExit(f"No markdown/text files found in {md_base} — run fetch/markdownize first.")
@@ -278,8 +289,9 @@ def build_document_graph(
             embeddings_id=embeddings_id, fts=fts, chunk_size_tokens=chunk_size_tokens
         )
     logger.info(
-        "Building Document Graph: sources={} db={} force={} llm={} embeddings={} fts={}",
+        "Building Document Graph: sources={} include={} db={} force={} llm={} embeddings={} fts={}",
         md_base,
+        include_patterns,
         db_path,
         force,
         resolved_llm or "algo",
@@ -298,7 +310,7 @@ def build_document_graph(
         factory = DocumentGraphFactory(
             sources=[str(md_base)],
             recursive=True,
-            include=["*.md", "*.txt"],
+            include=include_patterns,
             outline_config=outline_config,
         )
         # The pre-pass warms the content-addressed outline cache in parallel (no DB),

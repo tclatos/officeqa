@@ -1,70 +1,63 @@
 ---
 name: officeqa-qa
-description: Answer OfficeQA questions across documents (Treasury Bulletins, reports, etc.) by navigating the Document Graph — get_folder_toc, get_document_toc, get_section_content, search_sections. Use when the task is to answer a grounded question from an ingested OfficeQA document.
+description: Answer OfficeQA questions across documents (Treasury Bulletins, government reports, financial statistics) by navigating the Document Graph and using web search for external world facts.
 ---
 
 # OfficeQA Question Answering
 
-You answer questions about companies' financial filings (**10-K, 10-Q, 8-K, Earnings Releases, Annual Reports, 20-F/6-K**) by navigating a Document Graph: Folders → Documents → Markdown sections. You do NOT have the documents memorised — you must read them via tools.
-For ratio/margin formulas, calculation conventions, and sign handling (e.g. what the quick ratio includes, CapEx sign conventions), consult the `financial-ratios` skill.
+You answer complex financial and quantitative questions from U.S. Treasury Bulletins and government financial publications by navigating a Document Graph (Folders → Documents → Markdown sections) and leveraging web search for external real-world disambiguation.
 
 ---
 
-## 1. Filing Traps & Non-Obvious Routing Rules
+## 1. Dynamic Structure Discovery & Domain Acronyms
 
-Use `get_document_toc` to inspect the outline, but keep these critical structural rules and failure traps in mind:
+The outline, section tree, and per-table summaries are **extracted dynamically** into the Document Graph during ingestion. Always use `get_document_toc` to inspect the structure of each bulletin rather than guessing table numbers.
 
-- **8-K Filings — Always Check Exhibits (Exhibit 99.1)**:
-  - The main text of an 8-K is often a brief 1–2 page administrative summary that references exhibits.
-  - **The actual press release, transaction metrics, pro forma tables, and financial data live in `Exhibit 99.1`** (or other exhibits). When answering 8-K questions, navigate to or search for `Exhibit 99.1`.
-- **10-Q Interim Statements — Quarter vs. YTD Column Trap**:
-  - Statements in 10-Qs place **"Three Months Ended"** (the quarter) and **"Six / Nine Months Ended"** (Year-to-Date cumulative) side-by-side. Always verify the column header against what the question specifies.
-- **Notes to Financial Statements — Granular Line Items**:
-  - The face of the Balance Sheet or Income Statement only shows top-level aggregate totals.
-  - Granular details (**segment revenues/operating income, geographic breakdowns, restructuring charges, debt maturity schedules, tax rates, lease liabilities, discontinued operations**) live in the **Notes to Consolidated Financial Statements**.
-- **Earnings Releases & Non-GAAP Items**:
-  - For press releases and earnings announcements, distinguish GAAP figures from Non-GAAP metrics (Adjusted EBITDA, Free Cash Flow, Constant Currency revenue). Check the Non-GAAP reconciliation tables at the end of the release.
-- **Foreign Filings (Form 20-F, Form 6-K, IFRS)**:
-  - *Statement of Financial Position* = Balance Sheet; *Statement of Profit or Loss* = Income Statement; *Operating and Financial Review* = MD&A.
+Common Treasury Bulletin domain acronyms to recognize when inspecting TOCs and searching:
+- **FFO**: Federal Fiscal Operations (budget receipts, outlays, surplus/deficit actuals vs. Mid-Session Review [MSR] estimates).
+- **UST**: Account of the U.S. Treasury (Federal Reserve and operating cash balances).
+- **FD**: Federal Debt (public debt outstanding, debt held by the public, statutory debt limit).
+- **PDO**: Public Debt Operations (Treasury bill/bond offerings and auction results).
+- **OFS**: Ownership of Federal Securities (investor classes, foreign ownership).
+- **USCC**: U.S. Currency and Coin Outstanding and in Circulation (denomination breakdowns: $1 to $10,000 bills, coins, per capita circulation).
+- **IFS**: International Financial Statistics (U.S. reserve assets, liabilities/claims to foreign official institutions and commercial banks).
+- **CM**: Capital Movements (cross-border banking and non-banking claims/liabilities by country).
 
 ---
 
-## 2. Navigation Workflow
+## 2. Tool Routing & Investigation Workflow
 
-1. **Orient with `get_folder_toc(folder_id=None)`**:
-   - List every ingested document with its ID, filename, and one-line description.
-   - Pick the document matching the target company, fiscal period, and filing type.
-2. **Get the Map with `get_document_toc(document_id=<id>, max_level=2)`**:
-   - Inspect the document outline first. Drill into the specific section/statement where the data resides.
+### A. External Facts Disambiguation (`web_search`)
+Many OfficeQA questions reference external historical events or dates that serve as query parameters:
+- *Examples*: "The calendar year Amazon stock reached its lowest point between 2000 and 2005", "The calendar year the U.S. government passed a multi-billion bank bailout package (TARP/EESA)", "The historical bureau merged with Public Debt to form the Bureau of the Fiscal Service".
+- **Rule**: Use `web_search` to confirm external dates, years, merger histories, or legislation names **first**, then use those exact years/parameters to navigate the document graph.
+- **Do NOT** use `web_search` for internal bulletin data, numbers, or table cells that reside inside the Document Graph.
+
+### B. Document Graph Navigation Loop
+1. **Orient with `get_folder_toc()`**:
+   - List available documents to select the target bulletin or year.
+2. **Explore Outline with `get_document_toc(document_id=<id>, max_level=2)`**:
+   - Read the section tree and descriptions to locate the exact section or table for the target metric.
 3. **Targeted Search with `search_sections(query="<query>")`**:
-   - Run a hybrid search (vector + BM25) across the corpus when the exact section cannot be located via the TOC.
-   - Use high-signal terms (e.g. `query="Consolidated Balance Sheets"`, `query="Segment Information Note"`, `query="Exhibit 99.1"`).
-4. **Read Raw Markdown with `get_section_content(section_ids="<id1>,<id2>")`**:
-   - Read the complete section markdown for selected sections to view all table rows, column headers, units, and footnote markers.
-5. **Map Before You Re-Search**:
-   - Do not chain blind searches. If two searches fail to land on the answer, call `get_document_toc` on the document to view the section tree and read the relevant section directly.
-6. **Do NOT Re-Fetch Document TOC**:
-   - Once you call `get_document_toc` for a document, its full section tree and all section IDs remain available in your conversation history above. Do NOT call `get_document_toc` multiple times for the same document — refer to the earlier output to select your next sections.
+   - Use hybrid (vector + BM25) search for specific line items, table codes, or headers.
+4. **Read Section Content with `get_section_content(section_ids="<id>")`**:
+   - Inspect raw Markdown table rows, column dates, units, and footnote markers.
+5. **Map Before Re-Searching**:
+   - If searches do not immediately yield the table, inspect `get_document_toc` rather than issuing repeated blind keyword queries.
 
 ---
 
-## 3. Grounded Answering & Disambiguation Rules
+## 3. Grounded Calculation & Answering Rules
 
-- **Verify Column Headers & Periods**:
-  - Always verify table column dates (e.g. *June 30, 2023* vs *June 30, 2022* or *FY22* vs *FY21*).
-- **Handling Question Ambiguities & Dual Conventions**:
-  - *Company Disambiguation for Anonymous Questions*: When a question omits the company name (e.g., *"What drove the reduction in SG&A expense in FY2023?"*), inspect the candidate documents in the corpus for that fiscal period to identify the relevant filing and state the company name clearly in your conclusion.
-  - *Acronyms & Financial Terms*: "PPNE" maps directly to **Property, Plant and Equipment, Net** (PP&E Net).
-  - *Dual-Formula Conventions*: For Quick Ratio, state both Acid-Test (excluding prepaids) and Alternative (including prepaids); for Inventory Turnover, state both Average and Ending inventory formulas; for Liquidation Value, state both Common BVPS and Tangible BVPS.
-  - *Statement Face vs Footnotes*: If asked for items "directly outlined in the income statement" that are subsumed into general lines, state $0 on statement face and cite the detailed Note amount.
-  - *Best Performing / Top Line Performance*: If a question asks which category/segment "performed best" without specifying metric, report **both** highest percentage growth (% YoY) and highest absolute revenue ($) with supporting figures.
-  - *Corporate Actions & Spin-offs*: Clearly distinguish between completed spin-offs (discontinued operations), announced transactions, and historical events.
-  - *Non-GAAP vs. GAAP*: If a metric is non-GAAP, state the GAAP figure first and provide the Non-GAAP reconciliation/figure with clear labels.
-- **Units, Signs & Rounding**:
-  - Report exact units (millions, billions, %) and requested decimal precision.
-  - CapEx is reported as negative in cash flow statements; use positive absolute value for standalone CapEx or FCF calculations ($FCF = OCF - CapEx$).
-  - Negative tax provisions or pre-tax losses yield **negative effective tax rates** (preserve the sign).
-- **Citation**:
-  - Always cite section ID `[hash::sequence]` and source filename, e.g. `(BESTBUY_2024Q2_10Q_pdf.md [568acd8b84733490::12])`.
-- **Direct Synthesized Answers**:
-  - Answer directly first, followed by supporting calculations, verbatim extracted figures, and citations. Never paste entire unstructured sections.
+- **Scale & Unit Verification**:
+  - Always verify whether table values are reported in **thousands of dollars ($ thousands)**, **millions of dollars ($ millions)**, **billions of dollars**, or **exact dollar amounts / piece counts**.
+  - Always check column date headers (e.g. *June 30, 2011*, *End of July 2011*, *Fiscal Year 2010*).
+- **Calculation Precision & Formulas**:
+  - *Weighted Average Denomination*: $\frac{\text{Total Value of Currency in Circulation}}{\text{Total Number of Bills in Circulation}}$ (where number of bills per denomination = $\frac{\text{Value}}{\text{Denomination}}$).
+  - *Percentage Point Difference*: Compute ratio $R_1$ and $R_2$ as percentages, then $|\text{Percentage}_2 - \text{Percentage}_1|$.
+  - *Geometric Mean*: For $n$ values, $\left(\prod_{i=1}^n x_i\right)^{1/n}$.
+  - *R-squared ($R^2$)*: $R^2 = \frac{(S_{xy})^2}{S_{xx} \cdot S_{yy}}$.
+  - *Rounding*: Strictly adhere to requested decimal places (e.g., nearest thousandths place = 3 decimal places, hundredths = 2 decimal places, 4 decimal places).
+- **Citation & Structure**:
+  - Cite section IDs `[hash::sequence]` and source filename.
+  - State the concise numeric answer directly first, followed by clear arithmetic steps and table citations.

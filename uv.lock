@@ -4464,6 +4464,7 @@ dependencies = [
     { name = "genai-tk" },
     { name = "httpx" },
     { name = "pandas" },
+    { name = "tavily-python" },
 ]
 
 [package.optional-dependencies]
@@ -4485,6 +4486,7 @@ requires-dist = [
     { name = "genai-tk", extras = ["nlp"], marker = "extra == 'nlp'", git = "https://github.com/tclatos/genai-tk?branch=main" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "pandas", specifier = ">=2.2" },
+    { name = "tavily-python", specifier = ">=0.5.0" },
 ]
 provides-extras = ["harnessing", "nlp"]
 

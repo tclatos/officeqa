@@ -322,12 +322,12 @@ def run_bench(
             skip_set.add("grade")
         selected_steps = [s for s in ALL_STEPS if s not in skip_set]
 
-    logger.info(
-        "Bench profile '{}' | Steps: {} | docs: {}",
-        cfg.profile_name,
-        selected_steps,
-        cfg.docs,
-    )
+    # logger.info(
+    #     "Bench profile '{}' | Steps: {} | docs: {}",
+    #     cfg.profile_name,
+    #     selected_steps,
+    #     cfg.docs,
+    # )
     bench_flow(cfg, steps=selected_steps)
 
 
