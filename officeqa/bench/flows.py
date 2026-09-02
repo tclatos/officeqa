@@ -115,6 +115,8 @@ def build_graph_task(
     kg_db: str,
     force: bool,
     build_llm: str | None,
+    structure_strategy: str = "auto",
+    generate_summaries: bool = True,
     workers: int = 4,
     summary_min_tokens: int = 800,
     context_safety_ratio: float = 0.9,
@@ -132,6 +134,8 @@ def build_graph_task(
         docs[0] if docs else "",
         force=force,
         llm=build_llm,
+        structure_strategy=structure_strategy,
+        generate_summaries=generate_summaries,
         workers=workers,
         summary_min_tokens=summary_min_tokens,
         context_safety_ratio=context_safety_ratio,
@@ -317,9 +321,11 @@ def build_graph_flow(cfg: BenchConfig) -> dict[str, Any]:
     """Build the Ladybug Document Graph from the ingested Markdown files."""
     llm_arg = cfg.build_llm if cfg.build_llm_enabled else None
     logger.info(
-        "Building Document Graph (db={}, llm={}, workers={})...",
+        "Building Document Graph (db={}, llm={}, strategy={}, summaries={}, workers={})...",
         cfg.kg_db,
         llm_arg or "algorithmic",
+        cfg.structure_strategy,
+        cfg.generate_summaries,
         cfg.workers,
     )
     future = build_graph_task.submit(
@@ -328,6 +334,8 @@ def build_graph_flow(cfg: BenchConfig) -> dict[str, Any]:
         kg_db=cfg.kg_db,
         force=cfg.build_force,
         build_llm=llm_arg,
+        structure_strategy=cfg.structure_strategy,
+        generate_summaries=cfg.generate_summaries,
         workers=cfg.workers,
         summary_min_tokens=cfg.summary_min_tokens,
         context_safety_ratio=cfg.context_safety_ratio,
