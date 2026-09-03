@@ -34,14 +34,17 @@ Many questions reference external real-world events, legislation, or corporate d
 - **Do NOT** use `web_search` in loops or for internal document data, numbers, or table cells that reside inside the Document Graph.
 
 ### B. Document Graph Navigation & Revision Selection
-1. **Prefer the Newest Available Document for Historical Data**:
-   - When querying historical figures for a past year $Y$ (e.g., December 2000), **prefer the newest available bulletin/document in the graph that includes year $Y$**, as periodic publications routinely update preliminary estimates with revised final numbers in subsequent editions.
+1. **Document Edition and Historical Revision Selection**:
+   - When a question references a specific bulletin edition (e.g., "In the September 2011 Treasury Bulletin..."), navigate directly to that document.
+   - When querying historical figures for a past year $Y$ (e.g., December 2000) and no specific edition is mandated, **prefer the newest available bulletin/document in the graph that includes year $Y$**, as periodic publications routinely update preliminary estimates with revised final numbers in subsequent editions. If a revision differs from an earlier preliminary report, explicitly state both the revised figure and the earlier report for complete clarity.
 2. **Orient with `get_folder_toc()`**:
    - List available documents to select the target bulletin or latest edition covering the requested period.
 3. **Explore Outline with `get_document_toc(document_id=<id>, max_level=2)`**:
    - Read the section tree and descriptions to locate the exact section or table for the target metric.
-4. **Targeted Search with `search_sections(query="<query>")`**:
-   - Use hybrid/keyword search for specific line items, table codes, or headers.
+4. **Targeted Search with `search_sections(query="<query>", document_id="<id>")`**:
+   - Formulate compact, keyword-focused queries (e.g., `"USCC-1"`, `"Currency in Circulation"`, `"Table FD-1"`, `"Foreign Official Institutions"`).
+   - **Do NOT** pass long conversational questions into `search_sections`.
+   - Always supply `document_id` when the target bulletin is already known to constrain search scope and eliminate cross-document noise.
 5. **Read Section Content with `get_section_content(section_ids="<id>", start_line=..., max_lines=...)`**:
    - Inspect raw Markdown table rows, column dates, units, and footnote markers.
    - For wide/tall tables (spanning 50+ lines), use `start_line` and `max_lines` to retrieve only the relevant rows, keeping context concise.

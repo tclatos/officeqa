@@ -37,6 +37,16 @@ llm:
       providers:
         - fake: parrot
 
+    - model_id: glm_5.2
+      providers:
+        - openrouter: z-ai/glm-5.2
+      max_tokens: 8192
+
+    - model_id: DeepSeek-V4-Pro-0813
+      providers:
+        - openrouter: deepseek/deepseek-v4-pro-0813
+      max_tokens: 8192
+
     - model_id: mistral_7b
       providers:
         - custom:  # ChatOpenAI class parameters - see https://python.langchain.com/api_reference/openai/chat_models/langchain_openai.chat_models.base.ChatOpenAI.html
