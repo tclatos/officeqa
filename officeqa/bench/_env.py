@@ -27,11 +27,11 @@ REPORT_DIR = PROJECT_ROOT / "report"
 ONEDRIVE = Path.home() / "OneDrive"
 ONEDRIVE_MARKDOWN_DIR = ONEDRIVE / "prj" / "officeqa" / "markdown"
 
-DEFAULT_AGENT_LLM = "deepseek_v4flash@openrouter"
-DEFAULT_JUDGE_LLM = "deepseek_v4flash@openrouter"
+DEFAULT_AGENT_LLM = "glm_5.2@openrouter"
+DEFAULT_JUDGE_LLM = "DeepSeek-V4-Pro-0813@openrouter"
 # Flash LLM used by the LLM-enhanced Document Graph build (--llm) to discover
 # each document's outline (TOC + descriptions + section summaries) in one call.
-DEFAULT_BUILD_LLM = "deepseek_v4flash@openrouter"
+DEFAULT_BUILD_LLM = "deepseek-v4-flash-0731(none)@openrouter"
 
 
 def load_env() -> None:

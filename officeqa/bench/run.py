@@ -107,7 +107,14 @@ class BenchConfig(BaseModel):
         if active_pathspecs:
             try:
                 df = load_financebench()
-                all_docs = sorted(df["doc_name"].dropna().unique().tolist())
+                all_docs_set: set[str] = set(df["doc_name"].dropna().unique().tolist())
+                if "doc_names" in df.columns:
+                    for names in df["doc_names"].dropna():
+                        if isinstance(names, (list, tuple)):
+                            all_docs_set.update(names)
+                        elif hasattr(names, "tolist"):
+                            all_docs_set.update(names.tolist())
+                all_docs = sorted(all_docs_set)
                 matched = match_docs_by_pathspecs(all_docs, active_pathspecs)
                 if matched:
                     return matched

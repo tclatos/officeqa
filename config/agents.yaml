@@ -12,6 +12,10 @@ agent_defaults:
       mode: "stub"
     - class: genai_graph.agent.middleware.map_before_search.MapBeforeSearchMiddleware
       max_consecutive: 3
+    - class: langchain.agents.middleware.ToolCallLimitMiddleware
+      tool_name: "web_search"
+      run_limit: 3
+      exit_behavior: "continue"
   checkpointer:
     type: none
   backend:

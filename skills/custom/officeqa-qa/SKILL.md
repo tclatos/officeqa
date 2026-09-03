@@ -28,21 +28,24 @@ Common Treasury Bulletin domain acronyms to recognize when inspecting TOCs and s
 ## 2. Tool Routing & Investigation Workflow
 
 ### A. External Facts Disambiguation (`web_search`)
-Many OfficeQA questions reference external historical events or dates that serve as query parameters:
+Many questions reference external real-world events, legislation, or corporate dates that serve as query parameters:
 - *Examples*: "The calendar year Amazon stock reached its lowest point between 2000 and 2005", "The calendar year the U.S. government passed a multi-billion bank bailout package (TARP/EESA)", "The historical bureau merged with Public Debt to form the Bureau of the Fiscal Service".
-- **Rule**: Use `web_search` to confirm external dates, years, merger histories, or legislation names **first**, then use those exact years/parameters to navigate the document graph.
-- **Do NOT** use `web_search` for internal bulletin data, numbers, or table cells that reside inside the Document Graph.
+- **Rule**: Use `web_search` concisely (1–3 focused queries) to confirm external dates, years, merger histories, or legislation names **first**, then use those exact years/parameters to navigate the document graph.
+- **Do NOT** use `web_search` in loops or for internal document data, numbers, or table cells that reside inside the Document Graph.
 
-### B. Document Graph Navigation Loop
-1. **Orient with `get_folder_toc()`**:
-   - List available documents to select the target bulletin or year.
-2. **Explore Outline with `get_document_toc(document_id=<id>, max_level=2)`**:
+### B. Document Graph Navigation & Revision Selection
+1. **Prefer the Newest Available Document for Historical Data**:
+   - When querying historical figures for a past year $Y$ (e.g., December 2000), **prefer the newest available bulletin/document in the graph that includes year $Y$**, as periodic publications routinely update preliminary estimates with revised final numbers in subsequent editions.
+2. **Orient with `get_folder_toc()`**:
+   - List available documents to select the target bulletin or latest edition covering the requested period.
+3. **Explore Outline with `get_document_toc(document_id=<id>, max_level=2)`**:
    - Read the section tree and descriptions to locate the exact section or table for the target metric.
-3. **Targeted Search with `search_sections(query="<query>")`**:
-   - Use hybrid (vector + BM25) search for specific line items, table codes, or headers.
-4. **Read Section Content with `get_section_content(section_ids="<id>")`**:
+4. **Targeted Search with `search_sections(query="<query>")`**:
+   - Use hybrid/keyword search for specific line items, table codes, or headers.
+5. **Read Section Content with `get_section_content(section_ids="<id>", start_line=..., max_lines=...)`**:
    - Inspect raw Markdown table rows, column dates, units, and footnote markers.
-5. **Map Before Re-Searching**:
+   - For wide/tall tables (spanning 50+ lines), use `start_line` and `max_lines` to retrieve only the relevant rows, keeping context concise.
+6. **Map Before Re-Searching**:
    - If searches do not immediately yield the table, inspect `get_document_toc` rather than issuing repeated blind keyword queries.
 
 ---
@@ -52,9 +55,12 @@ Many OfficeQA questions reference external historical events or dates that serve
 - **Scale & Unit Verification**:
   - Always verify whether table values are reported in **thousands of dollars ($ thousands)**, **millions of dollars ($ millions)**, **billions of dollars**, or **exact dollar amounts / piece counts**.
   - Always check column date headers (e.g. *June 30, 2011*, *End of July 2011*, *Fiscal Year 2010*).
+- **Dual-Convention & Formula Clarity**:
+  - If a ratio or metric can be interpreted narrowly vs broadly (e.g. liquidity ratio including vs excluding non-marketable liabilities), compute and state both values clearly.
 - **Calculation Precision & Formulas**:
   - *Weighted Average Denomination*: $\frac{\text{Total Value of Currency in Circulation}}{\text{Total Number of Bills in Circulation}}$ (where number of bills per denomination = $\frac{\text{Value}}{\text{Denomination}}$).
   - *Percentage Point Difference*: Compute ratio $R_1$ and $R_2$ as percentages, then $|\text{Percentage}_2 - \text{Percentage}_1|$.
+  - *Compound Annual Growth Rate (CAGR)*: $\left(\frac{\text{Ending Value}}{\text{Beginning Value}}\right)^{1/n} - 1$.
   - *Geometric Mean*: For $n$ values, $\left(\prod_{i=1}^n x_i\right)^{1/n}$.
   - *R-squared ($R^2$)*: $R^2 = \frac{(S_{xy})^2}{S_{xx} \cdot S_{yy}}$.
   - *Rounding*: Strictly adhere to requested decimal places (e.g., nearest thousandths place = 3 decimal places, hundredths = 2 decimal places, 4 decimal places).
