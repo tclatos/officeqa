@@ -61,6 +61,8 @@ class BenchConfig(BaseModel):
     chunk_size_tokens: int = 1500
     pathspecs: list[str] = Field(default_factory=list)
     docs: list[str] = Field(default_factory=list)
+    question_ids: list[str] = Field(default_factory=list)
+    force_run: bool = False
     limit: int | None = None
     agent_profile: str = "default"
     folder_id: str | None = None

@@ -102,6 +102,23 @@ class BenchCommands(CliTopCommand):
                     help="Comma-separated doc_names overriding config files.docs",
                 ),
             ] = None,
+            questions: Annotated[
+                str | None,
+                typer.Option(
+                    "-q",
+                    "--question",
+                    "--question-ids",
+                    help="Comma-separated question IDs (e.g. 'UID0013,UID0015') or search terms",
+                ),
+            ] = None,
+            force_run: Annotated[
+                bool,
+                typer.Option(
+                    "--rerun",
+                    "--force-run",
+                    help="Re-execute questions/grades even if already recorded in runs.jsonl / scores.jsonl",
+                ),
+            ] = False,
             judge: Annotated[
                 bool | None,
                 typer.Option(
@@ -180,6 +197,11 @@ class BenchCommands(CliTopCommand):
                 specs_list = [s.strip() for s in pathspecs.split(",") if s.strip()]
                 cfg.docs = cfg.resolve_docs(pathspecs_override=specs_list)
 
+            if questions:
+                cfg.question_ids = [q.strip() for q in questions.split(",") if q.strip()]
+
+            if force_run:
+                cfg.force_run = True
             if limit is not None:
                 cfg.limit = limit
             if monitoring is not None:

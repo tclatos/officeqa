@@ -358,6 +358,23 @@ def run_questions_flow(
     if questions is None:
         df = load_financebench()
         questions = write_questions(df, cfg.docs)
+
+        if cfg.question_ids:
+            target_ids = {qid.strip().upper() for qid in cfg.question_ids}
+            questions = [
+                q
+                for q in questions
+                if (
+                    (q.get("financebench_id") or "").upper() in target_ids
+                    or (q.get("officeqa_id") or "").upper() in target_ids
+                    or any(
+                        term.lower() in (q.get("question") or "").lower()
+                        for term in cfg.question_ids
+                    )
+                )
+            ]
+            logger.info("Filtered to {} question(s) matching {}", len(questions), cfg.question_ids)
+
         if cfg.limit:
             questions = questions[: cfg.limit]
 
@@ -375,11 +392,19 @@ def run_questions_flow(
                 except Exception:
                     pass
 
-    pending_questions = [
-        q for q in questions if q.get("financebench_id") not in existing_records
-    ]
+    if cfg.force_run:
+        target_set = {
+            q.get("financebench_id") for q in questions if q.get("financebench_id")
+        }
+        for qid in target_set:
+            existing_records.pop(qid, None)
+        pending_questions = questions
+    else:
+        pending_questions = [
+            q for q in questions if q.get("financebench_id") not in existing_records
+        ]
 
-    if existing_records:
+    if existing_records and not cfg.force_run:
         logger.info(
             "Resuming: found {} completed question run(s); executing {} remaining question(s)",
             len(existing_records),
@@ -448,6 +473,22 @@ def grade_flow(
             if line.strip()
         ]
 
+    if cfg.question_ids:
+        target_ids = {qid.strip().upper() for qid in cfg.question_ids}
+        runs = [
+            r
+            for r in runs
+            if (
+                (r.get("financebench_id") or "").upper() in target_ids
+                or (r.get("officeqa_id") or "").upper() in target_ids
+                or any(
+                    term.lower() in (r.get("question") or "").lower()
+                    for term in cfg.question_ids
+                )
+            )
+        ]
+        logger.info("Filtered to {} run(s) for grading matching {}", len(runs), cfg.question_ids)
+
     scores_path.parent.mkdir(parents=True, exist_ok=True)
     existing_scores: dict[str, dict[str, Any]] = {}
     if scores_path.exists():
@@ -460,11 +501,19 @@ def grade_flow(
                 except Exception:
                     pass
 
-    pending_runs = [
-        r for r in runs if r.get("financebench_id") not in existing_scores
-    ]
+    if cfg.force_run:
+        target_set = {
+            r.get("financebench_id") for r in runs if r.get("financebench_id")
+        }
+        for qid in target_set:
+            existing_scores.pop(qid, None)
+        pending_runs = runs
+    else:
+        pending_runs = [
+            r for r in runs if r.get("financebench_id") not in existing_scores
+        ]
 
-    if existing_scores:
+    if existing_scores and not cfg.force_run:
         logger.info(
             "Resuming: found {} completed score(s); grading {} remaining run(s)",
             len(existing_scores),
