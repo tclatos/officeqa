@@ -271,11 +271,14 @@ flowchart LR
 
 ### Step 3 (P1): Rapid Engine & Harness Reliability Fixes
 
-#### A. Clean Final Answer Extraction in Benchmark Harness
-- **Target Files**: `officeqa/bench/run_questions.py`
-- **Problem**: Intermediate reasoning thoughts between tool calls leak into `agent_answer`. When runs halt, thought preambles are graded as the final answer (19 questions graded as "no substantive answer").
-- **Action**: Isolate final message content from intermediate stream tokens.
-- **Validation File**: `treasury_bulletin_1964_12` (Question `UID0028`: Gold `92000000`). Verify agent answer contains only final numeric answer, not intermediate thoughts.
+#### A. Clean Final Answer Extraction & Thinking Event Separation — **COMPLETED & VALIDATED**
+- **Target Files**: `genai_tk/core/messages.py`, `genai_tk/agents/harness/events.py`, `genai_tk/agents/harness/langchain_harness.py`, `genai_tk/agents/harness/chat_repl.py`, `officeqa/bench/run_questions.py`, `financebench/bench/run_questions.py`
+- **Problem**: Intermediate reasoning thoughts between tool calls and thinking tokens leaked into `agent_answer`. When runs halted or looped, thought preambles were graded as the final answer (19 questions graded as "no substantive answer" or "reasoning preamble only").
+- **Action Taken**:
+  1. **Generic Content Block Decomposer (`genai_tk/core/messages.py`)**: Built a generic decomposition layer leveraging LangChain 1.6+ `content_blocks` on `AIMessage` / `AIMessageChunk`. Accurately isolates visible `text` blocks from `reasoning` / `thought` / `thinking` blocks, tool calls, and model wrapper responses. Added `strip_reasoning_tags()` to scrub leaked markdown markers (`<think>...</think>`, `assistantfinal`).
+  2. **Dedicated `ThinkingEvent` Streaming**: Added `ThinkingEvent` to the canonical harness event hierarchy (`events.py`) and updated `langchain_harness.py` so thinking/reasoning chunks stream as `ThinkingEvent` while only true user-facing text emits as `TokenEvent`.
+  3. **Harness & Benchmark Run Stream Guardrails**: Updated `_run_one` across `officeqa` and `financebench` to buffer `final_turn_tokens` separately from `all_tokens`, resetting on tool invocations. If the agent finishes, the clean final turn text is extracted and sanitized, while thinking traces are preserved under `agent_thinking`.
+  4. **Full Unit Test Coverage & Core Docs**: Added comprehensive unit tests in `tests/unit_tests/core/test_messages.py` and `tests/unit_tests/agents/harness/test_langchain_harness.py` (all 724 unit tests passing), and documented in `docs/core.md`.
 
 #### B. Judge Grader Consistency Guardrails
 - **Target Files**: `officeqa/bench/grade.py`

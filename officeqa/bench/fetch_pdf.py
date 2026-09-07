@@ -41,7 +41,7 @@ def resolve_doc_name(doc_name: str | None) -> str:
 def _clean_stem(doc_name: str) -> str:
     """Strip extension from doc_name if present."""
     s = doc_name.strip()
-    if s.endswith(".txt") or s.endswith(".pdf") or s.endswith(".md"):
+    if s.endswith((".txt", ".pdf", ".md")):
         return Path(s).stem
     return s
 

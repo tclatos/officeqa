@@ -55,7 +55,7 @@ def match_docs_by_pathspecs(all_docs: list[str], pathspecs: list[str]) -> list[s
 def _normalize_doc_name(raw_name: str) -> str:
     """Normalize a document filename to its base stem without extension."""
     s = raw_name.strip().replace("\r", "")
-    if s.endswith(".txt") or s.endswith(".pdf") or s.endswith(".md"):
+    if s.endswith((".txt", ".pdf", ".md")):
         return Path(s).stem
     return s
 

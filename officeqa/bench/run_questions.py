@@ -53,15 +53,18 @@ async def _run_one(harness: object, q: dict, llm: str) -> dict:
     from genai_tk.agents.harness import (
         EndEvent,
         ErrorEvent,
+        ThinkingEvent,
         TokenEvent,
         ToolCallEvent,
         ToolResultEvent,
         UsageEvent,
     )
+    from genai_tk.core.messages import strip_reasoning_tags
 
     thread_id = q.get("officeqa_id") or q.get("financebench_id", "")
     all_tokens: list[str] = []
     final_turn_tokens: list[str] = []
+    thinking_tokens: list[str] = []
     tool_calls: list[dict] = []
     tool_results: list[dict] = []
     input_tokens = 0
@@ -72,6 +75,8 @@ async def _run_one(harness: object, q: dict, llm: str) -> dict:
         if isinstance(event, TokenEvent):
             all_tokens.append(event.text)
             final_turn_tokens.append(event.text)
+        elif isinstance(event, ThinkingEvent):
+            thinking_tokens.append(event.text)
         elif isinstance(event, ToolCallEvent):
             tool_calls.append({"tool": event.tool_name, "args": event.args})
             final_turn_tokens = []
@@ -88,6 +93,7 @@ async def _run_one(harness: object, q: dict, llm: str) -> dict:
     final_text = "".join(final_turn_tokens).strip()
     if not final_text:
         final_text = "".join(all_tokens).strip()
+    final_text = strip_reasoning_tags(final_text)
 
     return {
         "officeqa_id": thread_id,
@@ -101,6 +107,7 @@ async def _run_one(harness: object, q: dict, llm: str) -> dict:
         "justification": q.get("justification"),
         "evidence": q.get("evidence"),
         "agent_answer": final_text,
+        "agent_thinking": "".join(thinking_tokens).strip() or None,
         "tool_calls": tool_calls,
         "tool_results": tool_results,
         "n_tool_calls": len(tool_calls),
