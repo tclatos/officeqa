@@ -36,8 +36,8 @@ bench_profiles:
       skip_ocr: false
       force: true
       llm: deepseek-v4-flash-0731(none)@openrouter  # LLM used for structure and summaries (reasoning disabled for speed)
-      structure_strategy: toc_preamble         # auto | algo | toc_preamble | llm_full
-      summaries: false                        # generate LLM section descriptions & summaries (for get_document_toc)
+      structure_strategy: auto                # auto | algo | toc_preamble | llm_full
+      summaries: true                         # generate LLM section descriptions & summaries (for get_document_toc)
       workers: 4
       summary_min_tokens: 800
       context_safety_ratio: 0.9
