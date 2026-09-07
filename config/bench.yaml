@@ -2,8 +2,8 @@
 # Select active profile via CLI `--profile <name>` (defaults to `default_profile`).
 # Outcome paths write under a dedicated directory per bench profile.
 
-default_profile: mistral_glm
-
+default_profile: glm_5.3_Flash
+  
 # Shared paths across all bench profiles using OmegaConf variable interpolation.
 # Can be overridden per profile if needed.
 paths:
@@ -20,15 +20,15 @@ graph_db:
 
 
 bench_profiles:
-  mistral_glm:
-    description: "GLM 5.2 agent with Mistral OCR and DeepSeek V4 Pro judge"
+  glm_5.3_Flash:
+    description: "GLM 5.3 Flash agent and DeepSeek V4 Pro judge"
     markdownize_profile: best
 
     # Trace monitoring method: null (None / disabled) | "langchain" (LangSmith) | "langfuse" | "local" | "otel"
     monitoring: null
 
     llms:
-      agent: glm_5.2@openrouter
+      agent: glm_5.3_Flash@openrouter
       build: deepseek-v4-flash-0731(none)@openrouter
       judge: DeepSeek-V4-Pro-0813@openrouter
 
@@ -38,7 +38,7 @@ bench_profiles:
       llm: deepseek-v4-flash-0731(none)@openrouter  # LLM used for structure and summaries (reasoning disabled for speed)
       structure_strategy: auto                # auto | algo | toc_preamble | llm_full
       summaries: true                         # generate LLM section descriptions & summaries (for get_document_toc)
-      workers: 4
+      workers: 6
       summary_min_tokens: 800
       context_safety_ratio: 0.9
       embeddings: qwen3_06b@deepinfra         # SectionChunk vector model (null = no vector leg, keyword-only search)
@@ -47,9 +47,9 @@ bench_profiles:
 
     files:
       pathspecs:
-        - "*"
-        # - "treasury_bulletin_1991_09*"
-        # - "treasury_bulletin_1996_09*"
+        #- "*"
+        - "treasury_bulletin_1991_09*"
+        - "treasury_bulletin_1996_09*"
         # - "treasury_bulletin_2001_09*"
         # - "treasury_bulletin_2003_09*"
         # - "treasury_bulletin_2006_09*"
@@ -62,7 +62,7 @@ bench_profiles:
     agent:
       profile: default
       folder_id: null         # null = whole corpus (agent must pick the right doc)
-      concurrency: 4          # max concurrent question executions
+      concurrency: 6          # max concurrent question executions
 
     judge:
       enabled: true

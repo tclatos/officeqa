@@ -8,7 +8,7 @@ agents:
     harness: langchain
     name: "OfficeQA QA Analyst"
     type: deep
-    llm: glm_5.2@openrouter
+    llm: glm_5.3_Flash@openrouter
     description: "Deep agent that answers OfficeQA questions by navigating the Document Graph."
     system_prompt: |
       You are an expert analyst answering OfficeQA questions across documents (e.g. Treasury Bulletins,

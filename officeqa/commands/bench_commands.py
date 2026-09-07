@@ -144,7 +144,10 @@ class BenchCommands(CliTopCommand):
             ] = None,
             force: Annotated[
                 bool,
-                typer.Option("--force", help="Force rebuild of OCR and document graph"),
+                typer.Option(
+                    "--force",
+                    help="Force full re-execution: rebuild OCR/graph and re-run questions/grades (bypass run/grade caches)",
+                ),
             ] = False,
             config_path: Annotated[
                 str | None,
@@ -198,6 +201,7 @@ class BenchCommands(CliTopCommand):
                 cfg.judge_enabled = judge
             if force:
                 cfg.build_force = True
+                cfg.force_run = True
 
             console.print(
                 f"[bold green]Starting benchmark run:[/bold green] profile=[cyan]{cfg.profile_name}[/cyan], "
