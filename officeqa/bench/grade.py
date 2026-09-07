@@ -213,9 +213,7 @@ async def _grade_one(
     for attempt in range(max_retries):
         try:
             resp = await judge.ainvoke(messages)
-            content = (
-                resp.content if isinstance(resp.content, str) else str(resp.content)
-            )
+            content = resp.content if isinstance(resp.content, str) else str(resp.content)
             break
         except Exception as exc:
             if attempt < max_retries - 1:
@@ -288,9 +286,7 @@ async def _grade_all(
             "  → {} (numeric={}) [{}]",
             score["correctness"],
             score["numeric_match"],
-            (score["rationale"][:90] + "…")
-            if len(score["rationale"]) > 90
-            else score["rationale"],
+            (score["rationale"][:90] + "…") if len(score["rationale"]) > 90 else score["rationale"],
         )
     return scores
 
@@ -303,11 +299,7 @@ def _summarize(scores: list[dict]) -> dict:
     correct = sum(1 for s in scores if s.get("correctness") == "correct")
     partial = sum(1 for s in scores if s.get("correctness") == "partial")
     incorrect = sum(1 for s in scores if s.get("correctness") == "incorrect")
-    grounded = sum(
-        1
-        for s in scores
-        if s.get("groundedness") == "grounded" or s.get("grounded") is True
-    )
+    grounded = sum(1 for s in scores if s.get("groundedness") == "grounded" or s.get("grounded") is True)
     numeric = [s for s in scores if s.get("numeric_match") is not None]
     numeric_ok = sum(1 for s in numeric if s.get("numeric_match") is True)
     return {
@@ -339,6 +331,7 @@ def generate_markdown_report(
     """Generate a markdown evaluation report from scores and summary."""
     from collections import defaultdict
     from datetime import datetime, timezone
+
     from officeqa.bench._env import REPORT_DIR
 
     target_path = report_path or (REPORT_DIR / f"{profile_name}_report.md")
@@ -349,9 +342,7 @@ def generate_markdown_report(
     acc_lenient = f"{summary.get('accuracy_correct_or_partial', 0) * 100:.1f}%"
     groundedness = f"{summary.get('groundedness_rate', 0) * 100:.1f}%"
     num_match = (
-        f"{summary.get('numeric_match_rate', 0) * 100:.1f}%"
-        if summary.get("numeric_match_rate") is not None
-        else "N/A"
+        f"{summary.get('numeric_match_rate', 0) * 100:.1f}%" if summary.get("numeric_match_rate") is not None else "N/A"
     )
 
     lines: list[str] = [
@@ -426,9 +417,7 @@ def generate_markdown_report(
         lines.append("")
 
     # Non-correct questions analysis
-    non_correct = [
-        s for s in scores if s.get("correctness") in ("partial", "incorrect")
-    ]
+    non_correct = [s for s in scores if s.get("correctness") in ("partial", "incorrect")]
     if non_correct:
         lines.extend(
             [
@@ -457,21 +446,13 @@ def generate_markdown_report(
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Grade FinanceBench runs with an LLM-as-judge."
-    )
-    parser.add_argument(
-        "--judge", default=DEFAULT_JUDGE_LLM, help="LLM identifier for the judge."
-    )
+    parser = argparse.ArgumentParser(description="Grade FinanceBench runs with an LLM-as-judge.")
+    parser.add_argument("--judge", default=DEFAULT_JUDGE_LLM, help="LLM identifier for the judge.")
     parser.add_argument("--runs", default=str(RUNS_PATH), help="Path to runs.jsonl.")
     args = parser.parse_args(argv)
 
     load_env()
-    runs = [
-        json.loads(line)
-        for line in Path(args.runs).read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
+    runs = [json.loads(line) for line in Path(args.runs).read_text(encoding="utf-8").splitlines() if line.strip()]
     logger.info("Grading {} run(s) with judge={}", len(runs), args.judge)
 
     SCORES_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -479,9 +460,7 @@ def main(argv: list[str] | None = None) -> int:
 
     scores = asyncio.run(_grade_all(runs, args.judge))
     summary = _summarize(scores)
-    (FB_DIR / "scores_summary.json").write_text(
-        json.dumps(summary, indent=2), encoding="utf-8"
-    )
+    (FB_DIR / "scores_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     print(f"scores={SCORES_PATH}")
     print(f"summary={json.dumps(summary)}")

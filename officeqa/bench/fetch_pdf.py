@@ -35,9 +35,7 @@ def resolve_doc_name(doc_name: str | None) -> str:
         return doc_name
     if TARGET_PATH.exists():
         return TARGET_PATH.read_text(encoding="utf-8").strip()
-    raise SystemExit(
-        "No --doc given and no target_doc.txt found; run load_dataset first."
-    )
+    raise SystemExit("No --doc given and no target_doc.txt found; run load_dataset first.")
 
 
 def _clean_stem(doc_name: str) -> str:
@@ -88,9 +86,7 @@ def fetch_doc(
     )
 
     shutil.copy2(downloaded, dest_path)
-    logger.success(
-        "Saved transformed doc to {} ({} bytes)", dest_path, dest_path.stat().st_size
-    )
+    logger.success("Saved transformed doc to {} ({} bytes)", dest_path, dest_path.stat().st_size)
     return str(dest_path)
 
 
@@ -104,9 +100,7 @@ def fetch_pdf(doc_name: str, *, pdfs_dir: Path | None = None) -> str:
     stem = _clean_stem(doc_name)
     pdf_path = base / f"{stem}.pdf"
     if pdf_path.exists() and pdf_path.stat().st_size > 0:
-        logger.info(
-            "PDF already present: {} ({} bytes)", pdf_path, pdf_path.stat().st_size
-        )
+        logger.info("PDF already present: {} ({} bytes)", pdf_path, pdf_path.stat().st_size)
         return str(pdf_path)
 
     token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACEHUB_API_TOKEN")
@@ -127,12 +121,8 @@ def fetch_pdf(doc_name: str, *, pdfs_dir: Path | None = None) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Download an OfficeQA transformed document or PDF."
-    )
-    parser.add_argument(
-        "--doc", default=None, help="doc_name to download (default: selected target)."
-    )
+    parser = argparse.ArgumentParser(description="Download an OfficeQA transformed document or PDF.")
+    parser.add_argument("--doc", default=None, help="doc_name to download (default: selected target).")
     parser.add_argument(
         "--pdf",
         action="store_true",

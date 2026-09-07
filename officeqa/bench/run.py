@@ -22,11 +22,11 @@ import argparse
 import sys
 from pathlib import Path
 
+from genai_tk.config_mgmt.config_mngr import global_config
 from loguru import logger
 from omegaconf import OmegaConf
 from pydantic import BaseModel, Field
 
-from genai_tk.config_mgmt.config_mngr import global_config
 from officeqa.bench._env import PROJECT_ROOT, ensure_dirs, load_env
 
 ALL_STEPS = ("fetch", "build", "run", "grade")
@@ -174,9 +174,7 @@ def load_bench_profile(
         prof_data = profiles[selected_name] or {}
     else:
         available = list(profiles.keys())
-        raise KeyError(
-            f"Bench profile '{selected_name}' not found in {cfg_file}. Available: {available}"
-        )
+        raise KeyError(f"Bench profile '{selected_name}' not found in {cfg_file}. Available: {available}")
 
     # Top-level paths with per-profile override support
     top_paths = raw.get("paths", {}) or {}
@@ -200,14 +198,10 @@ def load_bench_profile(
         pdfs_dir=paths.get("pdfs_dir", "data/pdfs"),
         markdown_dir=paths.get("markdown_dir", "data/markdown_multi"),
         kg_db=paths.get("kg_db", "data/kg/financebench_multi.db"),
-        onedrive_markdown_dir=paths.get(
-            "onedrive_markdown_dir", "~/OneDrive/prj/financebench/markdown"
-        ),
+        onedrive_markdown_dir=paths.get("onedrive_markdown_dir", "~/OneDrive/prj/financebench/markdown"),
         runs=paths.get("runs", "data/financebench/{profile}/runs.jsonl"),
         scores=paths.get("scores", "data/financebench/{profile}/scores.jsonl"),
-        scores_summary=paths.get(
-            "scores_summary", "data/financebench/{profile}/scores_summary.json"
-        ),
+        scores_summary=paths.get("scores_summary", "data/financebench/{profile}/scores_summary.json"),
         agent_llm=llms.get("agent", "glm_5.2@openrouter"),
         build_llm=llms.get("build", "deepseek-v4-flash-0731@openrouter"),
         judge_llm=llms.get("judge", "DeepSeek-V4-Pro-0813@openrouter"),
@@ -215,11 +209,7 @@ def load_bench_profile(
         build_force=bool(build.get("force", True)),
         build_llm_enabled=bool(build.get("llm", True)),
         structure_strategy=str(build.get("structure_strategy", "auto")),
-        generate_summaries=bool(
-            build.get(
-                "summaries", build.get("generate_summaries", build.get("llm", True))
-            )
-        ),
+        generate_summaries=bool(build.get("summaries", build.get("generate_summaries", build.get("llm", True)))),
         workers=int(build.get("workers", 4)),
         summary_min_tokens=int(build.get("summary_min_tokens", 800)),
         context_safety_ratio=float(build.get("context_safety_ratio", 0.9)),
@@ -240,11 +230,10 @@ def load_bench_profile(
     return cfg
 
 
-def configure_bench_monitoring(
-    monitoring: str | list[str] | None, project_name: str = "financebench"
-) -> None:
+def configure_bench_monitoring(monitoring: str | list[str] | None, project_name: str = "financebench") -> None:
     """Configure or disable tracing monitoring (LangSmith/LangChain, LangFuse, local, etc.)."""
     import os
+
     from genai_tk.utils.tracing import reset_monitoring, setup_monitoring
 
     if not monitoring or str(monitoring).lower() in ("none", "null", "off", "false"):
@@ -353,9 +342,7 @@ def run_bench(
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Run the FinanceBench bench pipeline from a YAML config."
-    )
+    parser = argparse.ArgumentParser(description="Run the FinanceBench bench pipeline from a YAML config.")
     parser.add_argument(
         "--config",
         default=str(PROJECT_ROOT / "config" / "bench.yaml"),

@@ -7,14 +7,12 @@ Box-Cox transformations, geometric means, CAGR, inflation adjustments).
 
 from __future__ import annotations
 
-
-from langchain_core.tools import BaseTool
-
 from genai_tk.agents.tools.python_executor import (
     PythonExecutorTool,
     create_python_executor_tool,
     create_python_executor_tools,
 )
+from langchain_core.tools import BaseTool
 
 
 def create_calculator_tools(

@@ -33,9 +33,7 @@ _QUESTION_SEMAPHORES: dict[int, threading.Semaphore] = {}
 _JUDGE_SEMAPHORES: dict[int, threading.Semaphore] = {}
 
 
-def _get_semaphore(
-    cache: dict[int, threading.Semaphore], capacity: int
-) -> threading.Semaphore:
+def _get_semaphore(cache: dict[int, threading.Semaphore], capacity: int) -> threading.Semaphore:
     if capacity not in cache:
         cache[capacity] = threading.Semaphore(max(1, capacity))
     return cache[capacity]
@@ -47,9 +45,7 @@ def _get_semaphore(
 
 
 @task(retries=3, retry_delay_seconds=2, task_run_name="fetch-doc-{doc_name}")
-def fetch_doc_task(
-    doc_name: str, markdown_dir: str, pdfs_dir: str | None = None
-) -> str:
+def fetch_doc_task(doc_name: str, markdown_dir: str, pdfs_dir: str | None = None) -> str:
     """Download one document's transformed text with automatic retries."""
     from officeqa.bench.fetch_pdf import fetch_doc
 
@@ -159,9 +155,7 @@ def build_graph_task(
     return result
 
 
-@task(
-    retries=2, retry_delay_seconds=3, task_run_name="run-question-{q[financebench_id]}"
-)
+@task(retries=2, retry_delay_seconds=3, task_run_name="run-question-{q[financebench_id]}")
 def run_question_task(
     q: dict[str, Any],
     *,
@@ -174,9 +168,9 @@ def run_question_task(
     concurrency: int = 10,
 ) -> dict[str, Any]:
     """Execute one question against the Document Graph deep agent and record trajectory."""
+    from genai_graph.agent import create_docgraph_agent
     from genai_tk.agents.harness.profiles import load_langchain_profiles
 
-    from genai_graph.agent import create_docgraph_agent
     from officeqa.bench.run_questions import _run_one
 
     sem = _get_semaphore(_QUESTION_SEMAPHORES, concurrency)
@@ -184,9 +178,7 @@ def run_question_task(
     async def _execute() -> dict[str, Any]:
         profiles = load_langchain_profiles()
         if profile_name not in profiles:
-            raise KeyError(
-                f"Agent profile '{profile_name}' not found. Available: {sorted(profiles)}"
-            )
+            raise KeyError(f"Agent profile '{profile_name}' not found. Available: {sorted(profiles)}")
         profile = profiles[profile_name]
         harness = create_docgraph_agent(
             profile,
@@ -256,9 +248,7 @@ def run_question_task(
     return record
 
 
-@task(
-    retries=5, retry_delay_seconds=3, task_run_name="grade-run-{run[financebench_id]}"
-)
+@task(retries=5, retry_delay_seconds=3, task_run_name="grade-run-{run[financebench_id]}")
 def grade_run_task(
     run: dict[str, Any],
     *,
@@ -301,10 +291,7 @@ def grade_run_task(
 def fetch_flow(cfg: BenchConfig) -> list[str]:
     """Fetch transformed documents in parallel across configured documents."""
     logger.info("Fetching {} document(s) in parallel...", len(cfg.docs))
-    futures = [
-        fetch_doc_task.submit(doc, markdown_dir=cfg.markdown_dir, pdfs_dir=cfg.pdfs_dir)
-        for doc in cfg.docs
-    ]
+    futures = [fetch_doc_task.submit(doc, markdown_dir=cfg.markdown_dir, pdfs_dir=cfg.pdfs_dir) for doc in cfg.docs]
     return [f.result() for f in futures]
 
 
@@ -358,15 +345,11 @@ def build_graph_flow(cfg: BenchConfig) -> dict[str, Any]:
 
 
 @flow(name="financebench-run-questions")
-def run_questions_flow(
-    cfg: BenchConfig, questions: list[dict[str, Any]] | None = None
-) -> list[dict[str, Any]]:
+def run_questions_flow(cfg: BenchConfig, questions: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     """Run questions in parallel through the docgraph agent."""
     from officeqa.bench.load_dataset import load_financebench, write_questions
 
-    configure_bench_monitoring(
-        cfg.monitoring, project_name=f"financebench-{cfg.profile_name}"
-    )
+    configure_bench_monitoring(cfg.monitoring, project_name=f"financebench-{cfg.profile_name}")
 
     if questions is None:
         df = load_financebench()
@@ -380,10 +363,7 @@ def run_questions_flow(
                 if (
                     (q.get("financebench_id") or "").upper() in target_ids
                     or (q.get("officeqa_id") or "").upper() in target_ids
-                    or any(
-                        term.lower() in (q.get("question") or "").lower()
-                        for term in cfg.question_ids
-                    )
+                    or any(term.lower() in (q.get("question") or "").lower() for term in cfg.question_ids)
                 )
             ]
             logger.info(
@@ -410,16 +390,12 @@ def run_questions_flow(
                     pass
 
     if cfg.force_run:
-        target_set = {
-            q.get("financebench_id") for q in questions if q.get("financebench_id")
-        }
+        target_set = {q.get("financebench_id") for q in questions if q.get("financebench_id")}
         for qid in target_set:
             existing_records.pop(qid, None)
         pending_questions = questions
     else:
-        pending_questions = [
-            q for q in questions if q.get("financebench_id") not in existing_records
-        ]
+        pending_questions = [q for q in questions if q.get("financebench_id") not in existing_records]
 
     if existing_records and not cfg.force_run:
         logger.info(
@@ -466,9 +442,7 @@ def run_questions_flow(
 
 
 @flow(name="financebench-grade")
-def grade_flow(
-    cfg: BenchConfig, runs: list[dict[str, Any]] | None = None
-) -> dict[str, Any]:
+def grade_flow(cfg: BenchConfig, runs: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Grade question runs in parallel using LLM-as-judge."""
     from officeqa.bench.grade import _summarize, generate_markdown_report
 
@@ -480,11 +454,7 @@ def grade_flow(
         if not runs_path.exists():
             logger.warning("Runs file {} does not exist. Skipping grade.", runs_path)
             return {}
-        runs = [
-            json.loads(line)
-            for line in runs_path.read_text(encoding="utf-8").splitlines()
-            if line.strip()
-        ]
+        runs = [json.loads(line) for line in runs_path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
     if cfg.question_ids:
         target_ids = {qid.strip().upper() for qid in cfg.question_ids}
@@ -494,15 +464,10 @@ def grade_flow(
             if (
                 (r.get("financebench_id") or "").upper() in target_ids
                 or (r.get("officeqa_id") or "").upper() in target_ids
-                or any(
-                    term.lower() in (r.get("question") or "").lower()
-                    for term in cfg.question_ids
-                )
+                or any(term.lower() in (r.get("question") or "").lower() for term in cfg.question_ids)
             )
         ]
-        logger.info(
-            "Filtered to {} run(s) for grading matching {}", len(runs), cfg.question_ids
-        )
+        logger.info("Filtered to {} run(s) for grading matching {}", len(runs), cfg.question_ids)
 
     scores_path.parent.mkdir(parents=True, exist_ok=True)
     existing_scores: dict[str, dict[str, Any]] = {}
@@ -517,16 +482,12 @@ def grade_flow(
                     pass
 
     if cfg.force_run:
-        target_set = {
-            r.get("financebench_id") for r in runs if r.get("financebench_id")
-        }
+        target_set = {r.get("financebench_id") for r in runs if r.get("financebench_id")}
         for qid in target_set:
             existing_scores.pop(qid, None)
         pending_runs = runs
     else:
-        pending_runs = [
-            r for r in runs if r.get("financebench_id") not in existing_scores
-        ]
+        pending_runs = [r for r in runs if r.get("financebench_id") not in existing_scores]
 
     if existing_scores and not cfg.force_run:
         logger.info(
@@ -558,9 +519,7 @@ def grade_flow(
                 s = f.result()
                 new_scores.append(s)
             except Exception as exc:
-                logger.error(
-                    "[{}] All grading retries failed: {}", run["financebench_id"], exc
-                )
+                logger.error("[{}] All grading retries failed: {}", run["financebench_id"], exc)
                 fallback = {
                     "financebench_id": run["financebench_id"],
                     "doc_name": run["doc_name"],
@@ -630,9 +589,7 @@ def bench_flow(
     from genai_tk.utils.prefect_logging import install_loguru_prefect_bridge
 
     install_loguru_prefect_bridge()
-    configure_bench_monitoring(
-        cfg.monitoring, project_name=f"financebench-{cfg.profile_name}"
-    )
+    configure_bench_monitoring(cfg.monitoring, project_name=f"financebench-{cfg.profile_name}")
     load_env()
     ensure_dirs()
 
