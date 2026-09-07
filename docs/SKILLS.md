@@ -67,7 +67,7 @@ Be specific: "Use when the user asks to query the knowledge graph using Cypher."
 
 | Concern | Path |
 |---------|------|
-| Main logic | `financebench/...` |
+| Main logic | `officeqa/...` |
 | Config | `config/...` |
 
 ## References

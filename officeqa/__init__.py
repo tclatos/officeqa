@@ -1,1 +1,1 @@
-"""financebench — built with genai-tk."""
+"""officeqa — built with genai-tk."""

@@ -1,4 +1,4 @@
-# Justfile for financebench
+# Justfile for officeqa
 # Run `just` to see available recipes.
 
 # Default recipe — show help

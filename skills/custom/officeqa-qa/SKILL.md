@@ -28,10 +28,15 @@ Common Treasury Bulletin domain acronyms to recognize when inspecting TOCs and s
 ## 2. Tool Routing & Investigation Workflow
 
 ### A. External Facts Disambiguation (`web_search`)
-Many questions reference external real-world events, legislation, or corporate dates that serve as query parameters:
+Many questions reference external real-world events, legislation, inflation series, or corporate dates that serve as query parameters:
 - *Examples*: "The calendar year Amazon stock reached its lowest point between 2000 and 2005", "The calendar year the U.S. government passed a multi-billion bank bailout package (TARP/EESA)", "The historical bureau merged with Public Debt to form the Bureau of the Fiscal Service".
 - **Rule**: Use `web_search` concisely (1–3 focused queries) to confirm external dates, years, merger histories, or legislation names **first**, then use those exact years/parameters to navigate the document graph.
 - **Do NOT** use `web_search` in loops or for internal document data, numbers, or table cells that reside inside the Document Graph.
+- **Canonical CPI-U Series Selection**:
+  - When adjusting values across calendar years or decades using the Consumer Price Index for All Urban Consumers (CPI-U), **always select the canonical 1913–present CPI-U series (1982–84 = 100)** published by the U.S. Bureau of Labor Statistics (BLS) and the Federal Reserve Bank of Minneapolis.
+  - **Do NOT** use pre-1913 / 1800-base estimated historical series unless specifically requested by the question.
+- **Statutory Silver Monetary Stock Conversion**:
+  - When computing implied physical quantities from Treasury silver monetary stock dollar amounts (or vice versa), use the official U.S. statutory conversion rate of **$1.2929 per fine troy ounce** ($1.292929... / oz, or 0.7734375 oz per nominal dollar).
 
 ### B. Document Graph Navigation & Revision Selection
 1. **Document Edition and Historical Revision Selection**:
@@ -47,9 +52,13 @@ Many questions reference external real-world events, legislation, or corporate d
    - Always supply `document_id` when the target bulletin is already known to constrain search scope and eliminate cross-document noise.
 5. **Read Section Content with `get_section_content(section_ids="<id>", start_line=..., max_lines=...)`**:
    - Inspect raw Markdown table rows, column dates, units, and footnote markers.
-   - For wide/tall tables (spanning 50+ lines), use `start_line` and `max_lines` to retrieve only the relevant rows, keeping context concise.
+   - **Table Slicing for Tall/Wide Tables**: For tables spanning 50+ lines, pass `start_line` and `max_lines` (e.g. `get_section_content(section_ids="<id>", start_line=1, max_lines=40)`) to inspect header rows and early data, then paginate with subsequent slices to retrieve specific rows without overflowing context.
 6. **Map Before Re-Searching**:
    - If searches do not immediately yield the table, inspect `get_document_toc` rather than issuing repeated blind keyword queries.
+7. **Multi-Step Continuity & Tool Calling Discipline**:
+   - When multi-period, multi-table, or multi-document questions require successive lookups, **ALWAYS invoke the next tool call directly in each turn**.
+   - Do NOT output conversational status updates (e.g., *"Now let me check the 1959 bulletin..."*, *"I need to calculate the values..."*) without invoking the tool call, because generating text without tool calls terminates the execution loop and returns the status comment as the final answer.
+   - Only emit plain text when you have retrieved all necessary data, completed all calculations via `python_interpreter`, and are ready to deliver your final answer.
 
 ---
 
@@ -61,16 +70,153 @@ Many questions reference external real-world events, legislation, or corporate d
 - **Dual-Convention & Formula Clarity**:
   - If a ratio or metric can be interpreted narrowly vs broadly (e.g. liquidity ratio including vs excluding non-marketable liabilities), compute and state both values clearly.
 - **Calculation Precision & Python Execution**:
-  - Always use `python_interpreter` for non-trivial arithmetic, OLS regression, Box-Cox transformations, geometric means, CAGR, and multi-row series calculations to eliminate floating-point and rounding errors.
-  - *Ordinary Least Squares (OLS) Linear Regression*: Use `numpy.polyfit(x, y, 1)` where slope is `p[0]` and intercept is `p[1]`.
-  - *Box-Cox Transformation*: For parameter $\lambda$:
-    - If $\lambda \neq 0$: $y^{(\lambda)} = \frac{y^\lambda - 1}{\lambda}$
-    - If $\lambda = 0$: $y^{(0)} = \ln(y)$
-  - *Geometric Mean*: For $n$ positive values, compute $\left(\prod_{i=1}^n x_i\right)^{1/n} = \exp\left(\frac{1}{n}\sum_{i=1}^n \ln(x_i)\right)$ or use `scipy.stats.gmean(data)`.
-  - *Weighted Average Denomination*: $\frac{\text{Total Value of Currency in Circulation}}{\text{Total Number of Bills in Circulation}}$ (where number of bills per denomination = $\frac{\text{Value}}{\text{Denomination}}$).
-  - *Percentage Point Difference*: Compute ratio $R_1$ and $R_2$ as percentages, then $|\text{Percentage}_2 - \text{Percentage}_1|$.
-  - *Compound Annual Growth Rate (CAGR)*: $\left(\frac{\text{Ending Value}}{\text{Beginning Value}}\right)^{1/n} - 1$.
-  - *Rounding*: Strictly adhere to requested decimal places (e.g., nearest thousandths place = 3 decimal places, hundredths = 2 decimal places, 4 decimal places).
-- **Citation & Structure**:
-  - Cite section IDs `[hash::sequence]` and source filename.
-  - State the concise numeric answer directly first, followed by clear arithmetic steps and table citations.
+  - Always use `python_interpreter` for non-trivial arithmetic, regressions, transformations, and statistical metrics to eliminate floating-point and rounding errors.
+  - Python scripts must include `print(...)` statements to output final computed values.
+
+---
+
+## 4. Python Code & Statistical Formula Templates
+
+Execute these standardized implementations directly in `python_interpreter`:
+
+### A. Ordinary Least Squares (OLS) Linear Regression & Forecasting
+Given dependent series $y = [y_0, y_1, \dots, y_{n-1}]$ and independent variable $x = [x_0, x_1, \dots, x_{n-1}]$ (e.g. calendar years $[1990, 1991, \dots]$ or sequential index $[0, 1, \dots]$):
+- Model: $y = \text{slope} \cdot x + \text{intercept}$
+- Forecasting: $y_{\text{pred}} = \text{slope} \cdot x_{\text{target}} + \text{intercept}$
+
+```python
+import numpy as np
+from scipy import stats
+
+x = np.array([1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998], dtype=float)
+y = np.array([...], dtype=float)
+
+# Method 1: numpy polyfit (degree 1)
+slope, intercept = np.polyfit(x, y, 1)
+
+# Method 2: scipy stats linregress
+res = stats.linregress(x, y)
+slope, intercept = res.slope, res.intercept
+
+# Prediction
+x_target = 1999
+y_pred = slope * x_target + intercept
+print(f"Slope: {slope:.6f}, Intercept: {intercept:.6f}, Forecast: {y_pred:.6f}")
+```
+
+### B. Box-Cox Transformation
+For positive values $y > 0$ and transformation parameter $\lambda$:
+- If $\lambda \neq 0$: $y^{(\lambda)} = \frac{y^\lambda - 1}{\lambda}$
+- If $\lambda = 0$: $y^{(0)} = \ln(y)$
+
+```python
+import numpy as np
+
+
+def box_cox(y, lmbda):
+  y = np.asarray(y, dtype=float)
+  if lmbda == 0.0:
+    return np.log(y)
+  return (y**lmbda - 1.0) / lmbda
+
+
+# Example for lambda = 0.75:
+y_val = 54.2
+transformed = box_cox(y_val, 0.75)
+print(f"Box-Cox (lambda=0.75): {transformed:.6f}")
+```
+
+### C. Geometric Mean
+For $n$ positive observations $x_1, x_2, \dots, x_n$:
+$$\text{Geometric Mean} = \left(\prod_{i=1}^n x_i\right)^{1/n} = \exp\left(\frac{1}{n}\sum_{i=1}^n \ln(x_i)\right)$$
+
+```python
+import numpy as np
+from scipy import stats
+
+data = np.array([5420.1, 5380.4, 5490.2, 5410.0, 5407.5], dtype=float)
+
+# Method 1: scipy stats gmean
+gm = float(stats.gmean(data))
+
+# Method 2: log-sum-exp
+gm_alt = float(np.exp(np.mean(np.log(data))))
+print(f"Geometric Mean: {gm:.6f}")
+```
+
+### D. Inflation Adjustment & Price Indices
+- **Adjustment to Base/Target Year Dollars**:
+  $$\text{Real Value} = \text{Nominal Value} \times \frac{\text{CPI}_{\text{target}}}{\text{CPI}_{\text{source}}}$$
+- **Adjustment via Inflation Rate ($r$)**:
+  $$\text{Adjusted Value} = \text{Nominal Value} \times (1 + r) \quad \text{where } r = \frac{\text{CPI}_t - \text{CPI}_{t-1}}{\text{CPI}_{t-1}}$$
+
+```python
+# Real value in target-year constant dollars
+nominal_val = 2650.0
+cpi_source = 14.1  # e.g. 1938 CPI-U
+cpi_target = 100.0  # 1982-84 base
+real_val = nominal_val * (cpi_target / cpi_source)
+print(f"Real Value: {real_val:.4f}")
+```
+
+### E. Compound Annual Growth Rate (CAGR)
+- **Discrete Annual CAGR** ($n$ periods):
+  $$\text{CAGR} = \left(\frac{V_{\text{end}}}{V_{\text{start}}}\right)^{1/n} - 1$$
+- **Continuously Compounded Growth Rate**:
+  $$r_{\text{continuous}} = \frac{\ln(V_{\text{end}} / V_{\text{start}})}{n}$$
+
+```python
+import numpy as np
+
+v_start, v_end, n = 120.0, 240.0, 10
+cagr_discrete = (v_end / v_start) ** (1.0 / n) - 1.0
+cagr_continuous = np.log(v_end / v_start) / n
+print(
+    f"Discrete CAGR: {cagr_discrete:.6f}, Continuous CAGR:"
+    f" {cagr_continuous:.6f}"
+)
+```
+
+### F. Realized Variance of Log Rates
+For consecutive rate observations $r_1, r_2$:
+$$\text{Realized Variance} = \left(\ln(r_2) - \ln(r_1)\right)^2$$
+
+```python
+import numpy as np
+
+r1, r2 = 8.50, 7.80
+log_diff = np.log(r2) - np.log(r1)
+realized_var = log_diff**2
+print(f"Realized Variance: {realized_var:.6f}")
+```
+
+### G. Gini Coefficient
+For a 2-element distribution $[x_1, x_2]$ (e.g. receipts vs expenditures):
+$$G = \frac{|x_1 - x_2|}{2(x_1 + x_2)}$$
+
+```python
+import numpy as np
+
+
+def gini(x):
+  x = np.asarray(x, dtype=float)
+  n = len(x)
+  diff_sum = np.sum(np.abs(x[:, None] - x[None, :]))
+  return float(diff_sum / (2.0 * n * np.sum(x)))
+
+
+val = gini([1250.0, 1280.0])
+print(f"Gini: {val:.6f}")
+```
+
+### H. Weighted Average Denomination
+$$\text{Weighted Average} = \frac{\text{Total Value of Currency in Circulation}}{\text{Total Number of Bills in Circulation}} = \frac{\sum V_i}{\sum (V_i / D_i)}$$
+where $D_i \in [1, 2, 5, 10, 20, 50, 100, 500, 1000, 5000, 10000]$ and $V_i$ is the dollar value of denomination $D_i$.
+
+---
+
+## 5. Citation & Answer Formatting
+
+- Cite section IDs `[hash::sequence]` and source filename for every extracted metric.
+- Format: Present the concise final numerical value directly first, followed by clear arithmetic steps, formula definitions, and table citations.
+- Strictly adhere to requested decimal places (e.g., nearest thousandth = 3 decimal places, hundredth = 2 decimal places, tenths = 1 decimal place, whole number = 0 decimal places).

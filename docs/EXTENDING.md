@@ -1,11 +1,11 @@
-# Extending financebench
+# Extending officeqa
 
 This guide covers the common extension points for genai-tk projects.
 For step-by-step procedures, see the copilot skills listed at the bottom.
 
 ## CLI Commands
 
-Create `financebench/commands/my_commands.py`:
+Create `officeqa/commands/my_commands.py`:
 
 ```python
 from __future__ import annotations
@@ -33,12 +33,12 @@ Register in `config/app_conf.yaml`:
 ```yaml
 cli:
   commands:
-    - financebench.commands.my_commands.MyCommands
+    - officeqa.commands.my_commands.MyCommands
 ```
 
 ## Agent Tools
 
-Create `financebench/tools/my_tool.py`:
+Create `officeqa/tools/my_tool.py`:
 
 ```python
 from langchain_core.tools import tool
@@ -55,7 +55,7 @@ agents:
   my_agent:
     harness: langchain
     tools:
-      - function: financebench.tools.my_tool.my_tool
+      - function: officeqa.tools.my_tool.my_tool
 ```
 
 For a factory-pattern tool:
@@ -79,12 +79,12 @@ def create_my_tools() -> list[BaseTool]:
 Reference factory in an agent profile (`config/agents.yaml`):
 ```yaml
 tools:
-  - factory: financebench.tools.my_tool.create_my_tools
+  - factory: officeqa.tools.my_tool.create_my_tools
 ```
 
 ## LCEL Chains
 
-Create `financebench/chains/my_chain.py`:
+Create `officeqa/chains/my_chain.py`:
 
 ```python
 from genai_tk.core.factories.llm_factory import get_llm
@@ -103,7 +103,7 @@ def get_chain() -> Runnable:
 
 ## Webapp Pages
 
-Create `financebench/webapp/pages/my_page.py` (Streamlit):
+Create `officeqa/webapp/pages/my_page.py` (Streamlit):
 
 ```python
 import streamlit as st
@@ -119,7 +119,7 @@ if question := st.chat_input("Ask me anything..."):
 Register in `config/webapp.yaml`:
 ```yaml
 ui:
-  pages_dir: ${paths.project}/financebench/webapp/pages
+  pages_dir: ${paths.project}/officeqa/webapp/pages
   navigation:
     my-section:
       - my_page.py

@@ -1,24 +1,23 @@
-# financebench
+# officeqa
 
 Benchmarking a **Document Graph + agentic search** stack on
-[FinanceBench](https://huggingface.co/datasets/PatronusAI/financebench) (Patronus AI).
+**OfficeQA PRO** (U.S. Treasury Bulletins and government economic/financial publications).
 
 The stack — built on [genai-tk](https://github.com/tclatos/genai-tk) and
-[genai-graph](https://github.com/tclatos/genai-graph) — turns SEC filings
-(10-K, 10-Q, 8-K, Earnings Releases) into a `Folder → Document → MarkdownSection` graph on an embedded
-Ladybug (Kuzu/Cypher) database with native BM25 FTS and vector chunking. A Deep Agent answers financial
-questions by **navigating** that graph with read-only tools (`get_folder_toc`, `get_document_toc`,
-`get_section_content`, `search_sections`).
+[genai-graph](https://github.com/tclatos/genai-graph) — turns Treasury Bulletins and government reports
+into a `Folder → Document → MarkdownSection` graph on an embedded
+Ladybug (Kuzu/Cypher) database with native BM25 FTS and vector chunking. A Deep Agent answers complex
+analytical and statistical questions by **navigating** that graph with read-only tools (`get_folder_toc`, `get_document_toc`,
+`get_section_content`, `search_sections`) and CodeAct Python calculation tooling.
 
 
 ## Pipeline
 
 ```mermaid
 flowchart LR
-  HF["HuggingFace\nPatronusAI/financebench"] --> Fetch["Download PDFs\n(84 documents)"]
-  Fetch --> OCR["Markdownize / OCR\nMistral OCR ➔ AnyDoc ➔ MarkItDown"]
+  Docs["Treasury Bulletins / Reports\n(PDF Documents)"] --> OCR["Markdownize / OCR\nMistral OCR ➔ AnyDoc ➔ MarkItDown"]
   OCR --> Graph["Document Graph\n(Ladybug DB + BM25 + Embeddings)"]
-  Graph --> Agent["Deep Agent (GLM 5.2)\nTree Navigation + Hybrid Search"]
+  Graph --> Agent["Deep Agent (GLM 5.2)\nTree Navigation + Hybrid Search + CodeAct"]
   Agent --> Grade["LLM-as-Judge (DeepSeek V4 Pro)\nStrict Equivalence Scoring"]
   Grade --> Results["Scores & Summary JSON\nruns.jsonl + scores.jsonl"]
 ```

@@ -1,1 +1,1 @@
-"""FinanceBench bench harness — dataset, graph build, agent runs, grading, report."""
+"""OfficeQA bench harness — dataset, graph build, agent runs, grading, report."""

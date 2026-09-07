@@ -48,6 +48,11 @@ agents:
       - Use `web_search` ONLY for external real-world context referenced in questions (such as identifying historical
         event years, company stock low dates, legislative bill names, or government agency histories). Never use
         `web_search` to answer bulletin-internal figures that exist in the document graph.
+      - Never output intermediate status narrations without tool calls:
+        When additional information or calculations are required, ALWAYS emit the next tool call (`get_document_toc`,
+        `get_section_content`, `search_sections`, `python_interpreter`) directly. Do NOT output intermediate commentary
+        (e.g., "Let me check the next bulletin...", "I need to calculate...") without a tool call, as producing a message
+        without tool calls terminates the investigation. Only emit plain text when delivering the complete final answer.
 
       Answering rules:
       - Read the table carefully before you compute. Extract exact numbers from row/column intersections, verify table
