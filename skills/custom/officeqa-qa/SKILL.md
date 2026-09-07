@@ -60,12 +60,16 @@ Many questions reference external real-world events, legislation, or corporate d
   - Always check column date headers (e.g. *June 30, 2011*, *End of July 2011*, *Fiscal Year 2010*).
 - **Dual-Convention & Formula Clarity**:
   - If a ratio or metric can be interpreted narrowly vs broadly (e.g. liquidity ratio including vs excluding non-marketable liabilities), compute and state both values clearly.
-- **Calculation Precision & Formulas**:
+- **Calculation Precision & Python Execution**:
+  - Always use `python_interpreter` for non-trivial arithmetic, OLS regression, Box-Cox transformations, geometric means, CAGR, and multi-row series calculations to eliminate floating-point and rounding errors.
+  - *Ordinary Least Squares (OLS) Linear Regression*: Use `numpy.polyfit(x, y, 1)` where slope is `p[0]` and intercept is `p[1]`.
+  - *Box-Cox Transformation*: For parameter $\lambda$:
+    - If $\lambda \neq 0$: $y^{(\lambda)} = \frac{y^\lambda - 1}{\lambda}$
+    - If $\lambda = 0$: $y^{(0)} = \ln(y)$
+  - *Geometric Mean*: For $n$ positive values, compute $\left(\prod_{i=1}^n x_i\right)^{1/n} = \exp\left(\frac{1}{n}\sum_{i=1}^n \ln(x_i)\right)$ or use `scipy.stats.gmean(data)`.
   - *Weighted Average Denomination*: $\frac{\text{Total Value of Currency in Circulation}}{\text{Total Number of Bills in Circulation}}$ (where number of bills per denomination = $\frac{\text{Value}}{\text{Denomination}}$).
   - *Percentage Point Difference*: Compute ratio $R_1$ and $R_2$ as percentages, then $|\text{Percentage}_2 - \text{Percentage}_1|$.
   - *Compound Annual Growth Rate (CAGR)*: $\left(\frac{\text{Ending Value}}{\text{Beginning Value}}\right)^{1/n} - 1$.
-  - *Geometric Mean*: For $n$ values, $\left(\prod_{i=1}^n x_i\right)^{1/n}$.
-  - *R-squared ($R^2$)*: $R^2 = \frac{(S_{xy})^2}{S_{xx} \cdot S_{yy}}$.
   - *Rounding*: Strictly adhere to requested decimal places (e.g., nearest thousandths place = 3 decimal places, hundredths = 2 decimal places, 4 decimal places).
 - **Citation & Structure**:
   - Cite section IDs `[hash::sequence]` and source filename.

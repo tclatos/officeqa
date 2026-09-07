@@ -198,7 +198,9 @@ class BenchCommands(CliTopCommand):
                 cfg.docs = cfg.resolve_docs(pathspecs_override=specs_list)
 
             if questions:
-                cfg.question_ids = [q.strip() for q in questions.split(",") if q.strip()]
+                cfg.question_ids = [
+                    q.strip() for q in questions.split(",") if q.strip()
+                ]
 
             if force_run:
                 cfg.force_run = True

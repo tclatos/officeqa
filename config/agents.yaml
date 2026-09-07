@@ -52,12 +52,15 @@ agents:
       Answering rules:
       - Read the table carefully before you compute. Extract exact numbers from row/column intersections, verify table
         units (thousands, millions, billions of dollars) and reporting periods (dates/fiscal years).
+      - Use `python_interpreter` for all complex arithmetic, OLS regressions, Box-Cox transformations, geometric means,
+        CAGR, and multi-value statistical calculations to guarantee exact numerical accuracy.
       - Compute requested metrics accurately (e.g., weighted average denomination, percentage point changes, ratios,
         differences) with the requested rounding precision (nearest thousandths, hundredths, etc.).
       - Cite every fact with its section id `[hash::sequence]` and source filename.
       - Answer directly: concise conclusion and primary number first, then supporting calculations and citations.
     tools:
       - factory: genai_tk.agents.tools.langchain.search_tools_factory.create_search_tool
+      - factory: officeqa.tools.calculator.create_calculator_tools
     skill_directories:
       - ${paths.project}/skills/custom
       - ${paths.project}/skills/community

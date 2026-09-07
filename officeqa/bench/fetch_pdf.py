@@ -70,7 +70,9 @@ def fetch_doc(
 
     if dest_path.exists() and dest_path.stat().st_size > 0 and not force:
         logger.info(
-            "Document already present: {} ({} bytes)", dest_path, dest_path.stat().st_size
+            "Document already present: {} ({} bytes)",
+            dest_path,
+            dest_path.stat().st_size,
         )
         return str(dest_path)
 
@@ -86,7 +88,9 @@ def fetch_doc(
     )
 
     shutil.copy2(downloaded, dest_path)
-    logger.success("Saved transformed doc to {} ({} bytes)", dest_path, dest_path.stat().st_size)
+    logger.success(
+        "Saved transformed doc to {} ({} bytes)", dest_path, dest_path.stat().st_size
+    )
     return str(dest_path)
 
 
@@ -123,12 +127,16 @@ def fetch_pdf(doc_name: str, *, pdfs_dir: Path | None = None) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point."""
-    parser = argparse.ArgumentParser(description="Download an OfficeQA transformed document or PDF.")
+    parser = argparse.ArgumentParser(
+        description="Download an OfficeQA transformed document or PDF."
+    )
     parser.add_argument(
         "--doc", default=None, help="doc_name to download (default: selected target)."
     )
     parser.add_argument(
-        "--pdf", action="store_true", help="Download raw PDF instead of transformed markdown text."
+        "--pdf",
+        action="store_true",
+        help="Download raw PDF instead of transformed markdown text.",
     )
     args = parser.parse_args(argv)
 

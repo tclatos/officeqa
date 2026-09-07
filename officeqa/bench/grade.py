@@ -163,11 +163,15 @@ def _parse_verdict(content: str) -> JudgeVerdict:
         numeric_match = None
 
     # Normalize groundedness
-    raw_ground = str(
-        raw_dict.get("groundedness")
-        or raw_dict.get("grounded")
-        or ("grounded" if correctness == "correct" else "partial")
-    ).lower().strip()
+    raw_ground = (
+        str(
+            raw_dict.get("groundedness")
+            or raw_dict.get("grounded")
+            or ("grounded" if correctness == "correct" else "partial")
+        )
+        .lower()
+        .strip()
+    )
     if raw_ground in ("grounded", "true", "yes"):
         groundedness: Literal["grounded", "partial", "ungrounded"] = "grounded"
     elif raw_ground in ("partial", "partially_grounded", "partially grounded"):
@@ -209,7 +213,9 @@ async def _grade_one(
     for attempt in range(max_retries):
         try:
             resp = await judge.ainvoke(messages)
-            content = resp.content if isinstance(resp.content, str) else str(resp.content)
+            content = (
+                resp.content if isinstance(resp.content, str) else str(resp.content)
+            )
             break
         except Exception as exc:
             if attempt < max_retries - 1:
@@ -298,7 +304,9 @@ def _summarize(scores: list[dict]) -> dict:
     partial = sum(1 for s in scores if s.get("correctness") == "partial")
     incorrect = sum(1 for s in scores if s.get("correctness") == "incorrect")
     grounded = sum(
-        1 for s in scores if s.get("groundedness") == "grounded" or s.get("grounded") is True
+        1
+        for s in scores
+        if s.get("groundedness") == "grounded" or s.get("grounded") is True
     )
     numeric = [s for s in scores if s.get("numeric_match") is not None]
     numeric_ok = sum(1 for s in numeric if s.get("numeric_match") is True)
@@ -375,12 +383,14 @@ def generate_markdown_report(
         doc = s.get("doc_name") or "unknown"
         by_doc[doc].append(s)
 
-    lines.extend([
-        "## Results by Document",
-        "",
-        "| Document | Questions | Correct | Partial | Incorrect | Accuracy (Lenient) |",
-        "|---|---|---|---|---|---|",
-    ])
+    lines.extend(
+        [
+            "## Results by Document",
+            "",
+            "| Document | Questions | Correct | Partial | Incorrect | Accuracy (Lenient) |",
+            "|---|---|---|---|---|---|",
+        ]
+    )
     for doc, doc_scores in sorted(by_doc.items()):
         d_n = len(doc_scores)
         d_c = sum(1 for s in doc_scores if s.get("correctness") == "correct")
@@ -398,12 +408,14 @@ def generate_markdown_report(
         by_reasoning[r_type].append(s)
 
     if len(by_reasoning) > 1:
-        lines.extend([
-            "## Results by Question Type / Reasoning",
-            "",
-            "| Category | Questions | Correct | Partial | Incorrect | Accuracy (Lenient) |",
-            "|---|---|---|---|---|---|",
-        ])
+        lines.extend(
+            [
+                "## Results by Question Type / Reasoning",
+                "",
+                "| Category | Questions | Correct | Partial | Incorrect | Accuracy (Lenient) |",
+                "|---|---|---|---|---|---|",
+            ]
+        )
         for cat, cat_scores in sorted(by_reasoning.items()):
             c_n = len(cat_scores)
             c_c = sum(1 for s in cat_scores if s.get("correctness") == "correct")
@@ -414,24 +426,30 @@ def generate_markdown_report(
         lines.append("")
 
     # Non-correct questions analysis
-    non_correct = [s for s in scores if s.get("correctness") in ("partial", "incorrect")]
+    non_correct = [
+        s for s in scores if s.get("correctness") in ("partial", "incorrect")
+    ]
     if non_correct:
-        lines.extend([
-            "## Non-Perfect Questions Analysis",
-            "",
-        ])
+        lines.extend(
+            [
+                "## Non-Perfect Questions Analysis",
+                "",
+            ]
+        )
         for s in non_correct:
-            lines.extend([
-                f"### `{s.get('financebench_id')}` — {s.get('doc_name')} ({s.get('correctness', '').upper()})",
-                "",
-                f"- **Question**: {s.get('question')}",
-                f"- **Gold Answer**: {s.get('gold_answer')}",
-                f"- **Agent Answer**: {s.get('agent_answer')}",
-                f"- **Judge Rationale**: {s.get('rationale')}",
-                f"- **Numeric Match**: {s.get('numeric_match')}",
-                f"- **Groundedness**: {s.get('groundedness')}",
-                "",
-            ])
+            lines.extend(
+                [
+                    f"### `{s.get('financebench_id')}` — {s.get('doc_name')} ({s.get('correctness', '').upper()})",
+                    "",
+                    f"- **Question**: {s.get('question')}",
+                    f"- **Gold Answer**: {s.get('gold_answer')}",
+                    f"- **Agent Answer**: {s.get('agent_answer')}",
+                    f"- **Judge Rationale**: {s.get('rationale')}",
+                    f"- **Numeric Match**: {s.get('numeric_match')}",
+                    f"- **Groundedness**: {s.get('groundedness')}",
+                    "",
+                ]
+            )
 
     target_path.write_text("\n".join(lines), encoding="utf-8")
     return target_path

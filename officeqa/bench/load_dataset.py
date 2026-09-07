@@ -64,7 +64,9 @@ def _parse_source_files(val: str | None) -> list[str]:
     """Parse source_files string (separated by newlines or commas) into a list of normalized doc stems."""
     if not val or not isinstance(val, str):
         return []
-    lines = [line.strip() for line in val.replace("\r", "\n").split("\n") if line.strip()]
+    lines = [
+        line.strip() for line in val.replace("\r", "\n").split("\n") if line.strip()
+    ]
     return [_normalize_doc_name(line) for line in lines]
 
 
@@ -95,7 +97,9 @@ def load_officeqa(split: str = "pro") -> pd.DataFrame:
 
     # Enrich df with parsed doc_names and primary doc_name
     df["doc_names"] = df["source_files"].apply(_parse_source_files)
-    df["doc_name"] = df["doc_names"].apply(lambda names: names[0] if names else "unknown")
+    df["doc_name"] = df["doc_names"].apply(
+        lambda names: names[0] if names else "unknown"
+    )
 
     OQA_DIR.mkdir(parents=True, exist_ok=True)
     df.to_parquet(cache_file, index=False)
@@ -136,9 +140,9 @@ def _clean(value):
 def questions_for_doc(df: pd.DataFrame, doc_name: str) -> list[dict]:
     """Return the question rows for *doc_name* as JSON-serialisable dicts."""
     clean_target = _normalize_doc_name(doc_name)
-    mask = df["doc_name"].apply(lambda d: _normalize_doc_name(d) == clean_target) | df["doc_names"].apply(
-        lambda docs: any(_normalize_doc_name(d) == clean_target for d in docs)
-    )
+    mask = df["doc_name"].apply(lambda d: _normalize_doc_name(d) == clean_target) | df[
+        "doc_names"
+    ].apply(lambda docs: any(_normalize_doc_name(d) == clean_target for d in docs))
     sub = df[mask].sort_values("uid")
     rows: list[dict] = []
     for _, row in sub.iterrows():
@@ -190,7 +194,10 @@ def write_questions(df: pd.DataFrame, doc_names: str | list[str]) -> list[dict]:
             fh.write(json.dumps(r, ensure_ascii=False) + "\n")
     TARGET_PATH.write_text(",".join(clean_names), encoding="utf-8")
     logger.info(
-        "Wrote {} questions for {} doc(s) to {}", len(rows), len(clean_names), QUESTIONS_PATH
+        "Wrote {} questions for {} doc(s) to {}",
+        len(rows),
+        len(clean_names),
+        QUESTIONS_PATH,
     )
     return rows
 

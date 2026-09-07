@@ -103,7 +103,10 @@ class BenchConfig(BaseModel):
         if docs_override:
             return docs_override
 
-        from officeqa.bench.load_dataset import load_financebench, match_docs_by_pathspecs
+        from officeqa.bench.load_dataset import (
+            load_financebench,
+            match_docs_by_pathspecs,
+        )
 
         active_pathspecs = pathspecs_override or self.pathspecs
         if active_pathspecs:
@@ -121,7 +124,11 @@ class BenchConfig(BaseModel):
                 if matched:
                     return matched
             except Exception as exc:
-                logger.warning("Could not filter dataset by pathspecs ({}): {}", active_pathspecs, exc)
+                logger.warning(
+                    "Could not filter dataset by pathspecs ({}): {}",
+                    active_pathspecs,
+                    exc,
+                )
 
         return self.docs
 
@@ -208,7 +215,11 @@ def load_bench_profile(
         build_force=bool(build.get("force", True)),
         build_llm_enabled=bool(build.get("llm", True)),
         structure_strategy=str(build.get("structure_strategy", "auto")),
-        generate_summaries=bool(build.get("summaries", build.get("generate_summaries", build.get("llm", True)))),
+        generate_summaries=bool(
+            build.get(
+                "summaries", build.get("generate_summaries", build.get("llm", True))
+            )
+        ),
         workers=int(build.get("workers", 4)),
         summary_min_tokens=int(build.get("summary_min_tokens", 800)),
         context_safety_ratio=float(build.get("context_safety_ratio", 0.9)),

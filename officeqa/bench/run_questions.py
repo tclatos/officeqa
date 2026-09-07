@@ -60,7 +60,8 @@ async def _run_one(harness: object, q: dict, llm: str) -> dict:
     )
 
     thread_id = q.get("officeqa_id") or q.get("financebench_id", "")
-    answer_parts: list[str] = []
+    all_tokens: list[str] = []
+    final_turn_tokens: list[str] = []
     tool_calls: list[dict] = []
     tool_results: list[dict] = []
     input_tokens = 0
@@ -69,9 +70,11 @@ async def _run_one(harness: object, q: dict, llm: str) -> dict:
 
     async for event in harness.astream(q["question"], thread_id=thread_id):
         if isinstance(event, TokenEvent):
-            answer_parts.append(event.text)
+            all_tokens.append(event.text)
+            final_turn_tokens.append(event.text)
         elif isinstance(event, ToolCallEvent):
             tool_calls.append({"tool": event.tool_name, "args": event.args})
+            final_turn_tokens = []
         elif isinstance(event, ToolResultEvent):
             tool_results.append(
                 {"tool": event.tool_name, "content": (event.content or "")[:1500]}
@@ -84,6 +87,10 @@ async def _run_one(harness: object, q: dict, llm: str) -> dict:
         elif isinstance(event, EndEvent):
             pass
 
+    final_text = "".join(final_turn_tokens).strip()
+    if not final_text:
+        final_text = "".join(all_tokens).strip()
+
     return {
         "officeqa_id": thread_id,
         "financebench_id": thread_id,
@@ -95,7 +102,7 @@ async def _run_one(harness: object, q: dict, llm: str) -> dict:
         "gold_answer": q.get("answer", ""),
         "justification": q.get("justification"),
         "evidence": q.get("evidence"),
-        "agent_answer": "".join(answer_parts).strip(),
+        "agent_answer": final_text,
         "tool_calls": tool_calls,
         "tool_results": tool_results,
         "n_tool_calls": len(tool_calls),

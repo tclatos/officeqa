@@ -96,7 +96,9 @@ def _convert_pdf(pdf_path: Path, markdownize_profile: str = "medium") -> str:
         converter_name = "mistral_ocr"
 
     # 1. Primary conversion attempt with exponential backoff for OCR APIs
-    max_retries = 3 if converter_name in ("mistral_ocr", "mistral", "lighton_ocr") else 1
+    max_retries = (
+        3 if converter_name in ("mistral_ocr", "mistral", "lighton_ocr") else 1
+    )
     for attempt in range(1, max_retries + 1):
         try:
             converter = ConverterFactory.create(converter_name)
@@ -267,7 +269,9 @@ def build_document_graph(
 
     md_files = list(md_base.glob("*.md")) + list(md_base.glob("*.txt"))
     if not md_files:
-        raise SystemExit(f"No markdown/text files found in {md_base} — run fetch/markdownize first.")
+        raise SystemExit(
+            f"No markdown/text files found in {md_base} — run fetch/markdownize first."
+        )
 
     resolved_llm = _resolve_build_llm(llm)
     outline_config: OutlineConfig | None = None
@@ -331,13 +335,19 @@ def build_document_graph(
             backend, factory, force=force, retrieval_config=retrieval_config
         )
         # Verify graph integrity: assert every Document has associated MarkdownSection nodes
-        docs_df = backend.conn.execute("MATCH (d:Document) RETURN d.name, d.content_hash").get_as_df()
+        docs_df = backend.conn.execute(
+            "MATCH (d:Document) RETURN d.name, d.content_hash"
+        ).get_as_df()
         orphan_docs: list[str] = []
         for _, row in docs_df.iterrows():
             c_hash = row["d.content_hash"]
-            sec_count = backend.conn.execute(
-                f"MATCH (s:MarkdownSection) WHERE s.section_id STARTS WITH '{c_hash}' RETURN count(s)"
-            ).get_as_df().iloc[0, 0]
+            sec_count = (
+                backend.conn.execute(
+                    f"MATCH (s:MarkdownSection) WHERE s.section_id STARTS WITH '{c_hash}' RETURN count(s)"
+                )
+                .get_as_df()
+                .iloc[0, 0]
+            )
             if sec_count == 0:
                 orphan_docs.append(str(row["d.name"]))
         if orphan_docs:
@@ -348,7 +358,10 @@ def build_document_graph(
             )
             result.warnings.append(f"Orphaned documents with 0 sections: {orphan_docs}")
         else:
-            logger.info("Graph integrity verified: all {} document(s) have non-zero sections", len(docs_df))
+            logger.info(
+                "Graph integrity verified: all {} document(s) have non-zero sections",
+                len(docs_df),
+            )
     finally:
         backend.close()
 
