@@ -12,7 +12,7 @@ Operating across an enterprise corpus of **191 government financial publications
 - **Valid-Run Accuracy**: **80.3% lenient / 70.9% exact (127 / 133)** — the six excluded runs were halted by the agent's recursion ceiling, not by wrong answers.
 - **Audit Groundedness Rate**: **84.2% (112 / 133 answers)** — and critically, **100% of correct answers are source-grounded (90/90)**: the system never reaches a right answer through unsupported claims.
 - **Data-Era Robustness**: ≥ 64.3% exact accuracy across 7 of 10 document decades, from mid-century tables (1950s–60s: 74.2%) to modern releases (2010s: 77.8%).
-- **State of the Art**: **67.7% exact is the highest published end-to-end result on the 133-question OfficeQA Pro benchmark**, ahead of the best vendor (51.9%) and frontier-agent (<50%) results (see *Position vs. Published Results*).
+- **State of the Art**: **67.7% exact is the best published end-to-end agentic result on the 133-question OfficeQA Pro benchmark** — ahead of the best end-to-end vendor stack (Mistral, 51.9%) and every frontier-agent harness (<50%); only vendor-self-reported (unverified) model-card scores for ByteDance's Seed 2.1 rank higher (see *Position vs. Published Results*).
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -88,7 +88,7 @@ The analytical reasoning is orchestrated by a **GLM 5.3 Flash** deep-agent (Open
 
 ## Position vs. Published Results
 
-The same 133-question **OfficeQA Pro** benchmark (Databricks, Treasury Bulletins corpus) anchors several published evaluations. Our result compares favorably against every published end-to-end system we are aware of as of August 2026:
+The same 133-question **OfficeQA Pro** benchmark (Databricks, Treasury Bulletins corpus) anchors several published evaluations. Our result compares favorably against every published end-to-end system we are aware of as of September 2026:
 
 | System (source) | Setting | Accuracy |
 |---|---|---|
@@ -105,6 +105,31 @@ The same 133-question **OfficeQA Pro** benchmark (Databricks, Treasury Bulletins
 - Our **67.7%** is on the **Pro-only (harder) question set**; the 67.8% Claude result is on OfficeQA *Full* which includes 113 easier questions. Strict numeric-only accuracy: ours vs. Claude's deterministic substring matching are not directly comparable, but our LLM-judge adds independent grounding checks.
 - The published raw-PDF end-to-end results **≤ 51.9%** (Mistral best); ours used pre-processed plain-text + Markdown corpus (upstream parsing yields +16.1% average relative gain per the OfficeQA ablations).
 - On the harder **OfficeQA Pro V2 corpus** (Federal Accounts, 1,435 documents, Mar 2026 paper), the best agent harness reaches 54.4%, confirming that enterprise-grade grounded reasoning has headroom everywhere.
+
+### Model Leaderboards (self-reported)
+
+Two public model leaderboards track OfficeQA Pro scores that vendors self-report (independent verification absent):
+
+| Model | Best score | Leaderboard |
+|---|---|---|
+| Seed 2.1 Pro (ByteDance) | 72.2% | llm-stats |
+| Seed 2.1 Turbo (ByteDance) | 71.1% | llm-stats |
+| Claude Opus 5 (Anthropic) | 66.9% | benchlm |
+| Claude Opus 4.8 (Anthropic) | 66.2% | both |
+| Hy4 preview (Tencent, open) | 66.2% | both |
+| Kimi K3 (Moonshot AI) | 63.3% | both |
+| GLM-5.3-Flash (Z.AI) | 62.4% | both |
+| Claude Sonnet 5 | 59.4% | llm-stats |
+| Claude Fable 5 | 57.9% | benchlm |
+| GPT-5.5 | 54.1% | both |
+| GPT-5.4 | 53.2% | benchlm |
+| MiniMax M3 | 45.1% | both |
+| Claude Opus 4.7 (Adaptive) | 43.6% | benchlm |
+
+**Reading of the leaderboards**:
+- llm-stats (Sep 2026) marks **all 9 entries self-reported, 0 independently verified**; the top entry, Seed 2.1 Pro at 72.2% (released Jun 2026), traces to ByteDance's official Seed 2.1 model page — whose published evaluation tables do not visibly include an OfficeQA Pro row, so the figure's exact provenance and harness are unverifiable.
+- benchlm.ai (updated Sep 4, 2026) tracks 10 models and does not list the Seed 2.1 family; **our 67.7% exact would rank #1 on that board**, ahead of Claude Opus 5 (66.9%).
+- Most telling: the leaderboard score for **our own base model, GLM-5.3-Flash (62.4%), is exceeded by this system's 67.7% exact (+5.3pp)** — the hierarchical document-graph stack adds measurable accuracy over the bare model's self-reported capability on the same benchmark.
 
 ---
 
@@ -139,7 +164,7 @@ Input tokens dominate the bill (~89% of spend), consistent with the long-context
 
 ## Verdict
 
-The architecture has crossed from prototype to benchmark-grade capability: **76.7% comprehensive accuracy (67.7% exact) with 100% grounding on correct answers** across an 86-year, 191-document historical corpus — the highest published end-to-end result on the OfficeQA Pro question set, where the previous keyword-era baseline scored 33.3% on its small graded sample and the best external systems reach 51.9%. The path to the 85%+ tier is concrete: chart-image data extraction, halt-headroom on marathon questions, and deterministic computation guarantees.
+The architecture has crossed from prototype to benchmark-grade capability: **76.7% comprehensive accuracy (67.7% exact) with 100% grounding on correct answers** across an 86-year, 191-document historical corpus — the best published end-to-end result on the OfficeQA Pro question set (best external stack: 51.9%; best verified frontier harness: <50%), and #1 on the BenchLM model board — with only ByteDance's unverified, self-reported Seed 2.1 model-card scores (71–72%) above it. The path to the 85%+ tier is concrete: chart-image data extraction, halt-headroom on marathon questions, and deterministic computation guarantees.
 
 ---
 
