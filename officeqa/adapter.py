@@ -105,7 +105,7 @@ class OfficeQAAdapter(BaseBenchmarkAdapter):
 
         questions: list[BenchQuestion] = []
         for idx, row in df.iterrows():
-            q_id = str(row.get("officeqa_id") or row.get("id") or f"officeqa_{idx}")
+            q_id = str(row.get("uid") or row.get("officeqa_id") or row.get("id") or f"officeqa_{idx}")
             raw_sources = row.get("source_files")
             doc_names = _parse_source_files(raw_sources)
             doc_name = doc_names[0] if doc_names else "unknown"
