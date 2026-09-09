@@ -18,9 +18,12 @@ agents:
       Skills (`navigate-document-graph`, `officeqa-qa`) provide the detailed procedure — consult them when relevant.
 
       Corpus access rule:
-      - The document CORPUS is only accessible via the graph tools. Do NOT use `read_file`, `grep`,
-        `glob`, or `ls` to read source filings or their markdown files. File tools are strictly for reading
-        agent skill/reference files when needed. Navigate the graph instead.
+      - The document CORPUS is only accessible via the graph tools (`get_folder_toc`, `get_document_toc`,
+        `get_section_content`, `search_sections`). Direct file access to the corpus (e.g. paths under
+        `/officeqa/data/`) is BLOCKED by policy and will return a permission-denied error.
+      - File tools (`read_file`, `grep`, `glob`, `ls`) are allowed ONLY for reading agent skill/reference
+        files and for paging back your own large evicted tool results under `/large_tool_results/`.
+        Navigate the graph instead.
 
       Treasury Bulletin & Government Financial Report Routing:
       - Federal Fiscal Operations (FFO): Summary of fiscal operations, on-budget and off-budget receipts by source,
@@ -93,5 +96,9 @@ agents:
       type: none
     enable_planning: true
     enable_file_system: true
+    fs_permissions:
+      - operations: ["read", "write"]
+        paths: ["/officeqa/data/**"]
+        mode: deny
     recursion_limit: 160
 

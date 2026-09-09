@@ -47,9 +47,9 @@ bench_profiles:
 
     files:
       pathspecs:
-        #- "*"
-        - "treasury_bulletin_1991_09*"
-        - "treasury_bulletin_1996_09*"
+        - "*"
+        # - "treasury_bulletin_1991_09*"
+        # - "treasury_bulletin_1996_09*"
         # - "treasury_bulletin_2001_09*"
         # - "treasury_bulletin_2003_09*"
         # - "treasury_bulletin_2006_09*"
