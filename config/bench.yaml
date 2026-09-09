@@ -3,6 +3,7 @@
 # Outcome paths write under a dedicated directory per bench profile.
 
 default_profile: glm_5.3_Flash
+adapter: officeqa.adapter.OfficeQAAdapter
   
 # Shared paths across all bench profiles using OmegaConf variable interpolation.
 # Can be overridden per profile if needed.
