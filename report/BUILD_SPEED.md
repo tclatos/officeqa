@@ -212,6 +212,13 @@ per-document `extract_outline_task` (retries=2, isolated failures) + single-writ
 same logic; sync wrapper unchanged for other callers.
 - `officeqa/scratch_build_speed.py` — reproducible experiment harness.
 
+**Follow-up (same day):** the build pipeline was unified into a single baseline,
+`genai_graph/kg/document_graph/build.py` (`build_document_graph` +
+`warm_outline_cache`). `cli docgraph build`, the workflow-engine steps and the
+bench are now thin wrappers over it — so the parallel outline pre-pass, parallel
+embeddings, retrieval setup and stage timings from this work apply to any project,
+not just the bench. The CLI gained `--embeddings` / `--embed-workers`.
+
 No changes to the production DB (`data/kg/officeqa.db`); experiments used isolated
 dbs under `data/bench_speed/`. Nothing was committed.
 
