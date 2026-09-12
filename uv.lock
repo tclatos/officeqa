@@ -1983,8 +1983,8 @@ requires-dist = [
     { name = "devtools", specifier = ">=0.12.2" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.6" },
     { name = "genai-graph", extras = ["harnessing"], marker = "extra == 'all'" },
-    { name = "genai-tk", git = "https://github.com/tclatos/genai-tk?branch=main" },
-    { name = "genai-tk", extras = ["harnessing"], marker = "extra == 'harnessing'", git = "https://github.com/tclatos/genai-tk?branch=main" },
+    { name = "genai-tk", git = "https://github.com/tclatos/genai-tk?rev=main" },
+    { name = "genai-tk", extras = ["harnessing"], marker = "extra == 'harnessing'", git = "https://github.com/tclatos/genai-tk?rev=main" },
     { name = "ladybug", specifier = ">=0.16.1" },
     { name = "langchain-classic", specifier = ">=1.0.0" },
     { name = "langchain-litellm", specifier = ">=0.3.2" },
@@ -2042,7 +2042,7 @@ ui = [
 [[package]]
 name = "genai-tk"
 version = "0.1.0"
-source = { git = "https://github.com/tclatos/genai-tk?branch=main#db2bfbfe55ad3683651979a863abd554c701ff62" }
+source = { git = "https://github.com/tclatos/genai-tk?rev=main#7d4f8919454b6b115ce53105f4382fe20bb81734" }
 dependencies = [
     { name = "abbreviations" },
     { name = "bcrypt" },
@@ -4283,7 +4283,7 @@ requires-dist = [
     { name = "datasets", specifier = ">=2.20" },
     { name = "firecrawl-anydoc", specifier = ">=0.2.4" },
     { name = "genai-graph", editable = "../genai-graph" },
-    { name = "genai-tk", extras = ["harnessing"], git = "https://github.com/tclatos/genai-tk?branch=main" },
+    { name = "genai-tk", extras = ["harnessing"], git = "https://github.com/tclatos/genai-tk?rev=main" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "scipy", specifier = ">=1.18.1" },

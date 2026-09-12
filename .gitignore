@@ -40,6 +40,7 @@ data/officeqa/
 data/edenai_models.json
 data/edenai_eur_models.json
 data/models_dev.json
+data/bench_speed/
 
 .agents.input.history
 
@@ -56,4 +57,5 @@ data/financebench/
 
 # VS Code workspace files
 *.code-workspace
+
 
