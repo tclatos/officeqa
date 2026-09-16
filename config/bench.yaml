@@ -1,101 +1,37 @@
-# OfficeQA evaluation configurations and document conversion settings.
+# OfficeQA evaluation configuration.
 # Select active profile via CLI `--profile <name>` (defaults to `default_profile`).
 # Outcome paths write under a dedicated directory per bench profile.
 
-default_profile: glm_5.3_Flash
-adapter: officeqa.adapter.OfficeQAAdapter
-  
-# Shared paths across all bench profiles using OmegaConf variable interpolation.
-# Can be overridden per profile if needed.
+default_profile: default
+dataset_adapter: officeqa.adapter.OfficeQAAdapter
+
+# Shared outcome paths across all bench profiles
 paths:
-  pdfs_dir: ${paths.data_root}/pdfs
-  markdown_dir: ${paths.data_root}/markdown_multi
-  kg_db: ${paths.data_root}/kg/officeqa.db
-  saved_markdown_dir: ~/OneDrive/prj/officeqa/markdown
-  onedrive_markdown_dir: ${paths.saved_markdown_dir}
   runs: ${paths.data_root}/officeqa/{profile}/runs.jsonl
   scores: ${paths.data_root}/officeqa/{profile}/scores.jsonl
   scores_summary: ${paths.data_root}/officeqa/{profile}/scores_summary.json
 
-graph_db:   
-  default: ${paths.kg_db}   # used by 'cli docgraph' commands
-
-
 bench_profiles:
-  glm_5.3_Flash:
-    description: "GLM 5.3 Flash agent and DeepSeek V4 Pro judge"
-    markdownize_profile: best
-
-    # Trace monitoring method: null (None / disabled) | "langchain" (LangSmith) | "langfuse" | "local" | "otel"
-    monitoring: null
-
-    llms:
-      agent: glm_5.3_Flash@openrouter
-      build: deepseek-v4-flash-0731(none)@openrouter
-      judge: DeepSeek-V4-Pro-0813@openrouter
-
-    build:
-      skip_ocr: false
-      force: true
-      llm: deepseek-v4-flash-0731(none)@openrouter  # LLM used for structure and summaries (reasoning disabled for speed)
-      structure_strategy: auto                # auto | algo | toc_preamble | llm_full
-      summaries: true                         # generate LLM section descriptions & summaries (for get_document_toc)
-      workers: 6
-      summary_min_tokens: 800
-      context_safety_ratio: 0.9
-      embeddings: qwen3_06b@deepinfra         # SectionChunk vector model (null = no vector leg, keyword-only search)
-      fts: true                               # native BM25/FTS index over MarkdownSection(title, text, description)
-      chunk_size_tokens: 1500                 # target chunk size for long sections
+  default:
+    description: "GLM 5.3 Flash agent with DeepSeek V4 Pro grader on OfficeQA corpus"
+    docgraph_profile: default
+    agent_profile: default
 
     files:
       pathspecs:
         - "*"
-        # - "treasury_bulletin_1991_09*"
-        # - "treasury_bulletin_1996_09*"
-        # - "treasury_bulletin_2001_09*"
-        # - "treasury_bulletin_2003_09*"
-        # - "treasury_bulletin_2006_09*"
-        # - "treasury_bulletin_2010_09*"
-        # - "treasury_bulletin_2011_09*"
-        # - "treasury_bulletin_2012_09*"
-        # - "treasury_bulletin_2013_09*"
+      docs: []
       limit: null
 
-    agent:
-      profile: default
-      folder_id: null         # null = whole corpus (agent must pick the right doc)
-      concurrency: 6          # max concurrent question executions
+    runner:
+      concurrency: 6
+      folder_id: null
+      monitoring: null
 
-    judge:
+    grader:
       enabled: true
-      concurrency: 4          # max concurrent LLM-as-judge grading tasks
+      llm: DeepSeek-V4-Pro-0813@openrouter
+      concurrency: 4
 
-
-# Document converter definitions and pathspec-driven profiles
-markdownize_profiles:
-  fast:
-    rules:
-      - pathspec: "**/*.{xlsx,xls,ods}"
-        converter: messy_xls
-      - pathspec: "**/*"
-        converter: anydoc
-
-  best:
-    rules:
-      - pathspec: "**/*.{xlsx,xls,ods}"
-        converter: messy_xls
-      - pathspec: "**/*.{ppt,pptx,odp,doc,docx,odt,rtf}"
-        converter: mistral_ocr
-      - pathspec: "**/*"
-        converter: anydoc
-
-  medium:
-    rules:
-      - pathspec: "**/*.{ppt,pptx,odp,doc,docx,odt,rtf,xlsx,xls,ods}"
-        converter: via_pdf
-      - pathspec: "**/*.pdf"
-        converter: lighton_ocr
-      - pathspec: "**/*"
-        converter: anydoc
 
 
