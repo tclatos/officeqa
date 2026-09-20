@@ -3,7 +3,7 @@ default_profile: default
 
 docgraph_profiles:
   default:
-    description: "Ladybug Document Graph for OfficeQA Treasury Bulletins"
+    description: "Multimodal Document Graph for OfficeQA Treasury Bulletins with HTML tables and VLM image understanding"
     markdownize_profile: best
 
     paths:
@@ -13,12 +13,12 @@ docgraph_profiles:
       saved_markdown_dir: ~/OneDrive/prj/officeqa/markdown
 
     llms:
-      summary: deepseek-v4-flash-0731(none)@openrouter  # LLM for structure and summaries (reasoning disabled)
-      image: null                                      # No image VLM needed for OfficeQA text/table documents
+      summary: deepseek-v4-flash-0731(none)@openrouter  # Structure discovery & section descriptions (reasoning disabled)
+      image: gemini-2.5-flash@openrouter                # VLM for uncaptioned image descriptions and query_image
 
     images:
-      enabled: false                                   # Visual VLM processing disabled
-      describe_uncaptioned: false
+      enabled: true                                     # Enable multimodal visual capabilities
+      describe_uncaptioned: true                        # Generate descriptions for uncaptioned images >10KB
       min_size_bytes: 10240
       max_queries_per_turn: 3
 

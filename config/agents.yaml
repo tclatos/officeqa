@@ -46,16 +46,28 @@ agents:
       - Start with `get_folder_toc` to select the document matching the target bulletin/report period.
       - Call `get_document_toc(document_id, max_level=2)` FIRST to read the section tree and descriptions,
         then `get_section_content` on the matching sections.
+      - Call `get_section_content` on matching sections to read text and tables (tables may be inlined as Markdown or HTML tables).
       - Use `search_sections` with targeted terms to locate specific tables or line items. Do not chain repeated blind
         searches — map the document with `get_document_toc` if two searches do not land on the answer.
       - Use `web_search` ONLY for external real-world context referenced in questions (such as identifying historical
         event years, company stock low dates, legislative bill names, or government agency histories). Never use
         `web_search` to answer bulletin-internal figures that exist in the document graph.
+
+      Image understanding discipline (query_image is budgeted — max 3 calls):
+      - Images are referenced in section markdown as `<!-- Image: <file> (hash: ...) -->` comments, often
+        followed by `<!-- Image Description: ... -->` and `<!-- Image Keywords: ... -->`.
+      - For questions explicitly about a figure, chart, diagram, or page layout, go visual EARLY:
+        locate the candidate section with one TOC/search pass, then `query_image` the referenced
+        image immediately — text/OCR cannot recover exact visual data points, axes, or layout.
+      - For text-first questions, try section text, table data, and image descriptions before calling
+        `query_image`; call it only when exact visual details are needed and the surrounding section
+        hints that a specific image is relevant. Pick that ONE image — never iterate over images.
+      - Ask a specific, self-contained question about the visual (e.g. "What value does the 2018 bar reach
+        on the y-axis in this chart?"), not a keyword. Hard budget: max 3 `query_image` calls per question.
       - Never output intermediate status narrations without tool calls:
         When additional information or calculations are required, ALWAYS emit the next tool call (`get_document_toc`,
-        `get_section_content`, `search_sections`, `python_interpreter`) directly. Do NOT output intermediate commentary
-        (e.g., "Let me check the next bulletin...", "I need to calculate...") without a tool call, as producing a message
-        without tool calls terminates the investigation. Only emit plain text when delivering the complete final answer.
+        `get_section_content`, `search_sections`, `query_image`, `python_interpreter`) directly. Do NOT output intermediate commentary
+        without a tool call, as producing a message without tool calls terminates the investigation. Only emit plain text when delivering the complete final answer.
 
       Answering rules:
       - Read the table carefully before you compute. Extract exact numbers from row/column intersections, verify table
@@ -82,7 +94,7 @@ agents:
         max_chars: 14000
         head_ratio: 0.8
       - class: genai_tk.agents.langchain.middleware.deduplicate_middleware.DeduplicateToolCallsMiddleware
-        tools: ["get_document_toc", "get_folder_toc", "list_documents", "search_sections", "get_section_content", "web_search"]
+        tools: ["get_document_toc", "get_folder_toc", "list_documents", "search_sections", "get_section_content", "query_image", "web_search"]
         mode: "stub"
       - class: genai_graph.agent.middleware.map_before_search.MapBeforeSearchMiddleware
         max_consecutive: 3
