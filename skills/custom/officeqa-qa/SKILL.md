@@ -126,27 +126,35 @@ transformed = box_cox(y_val, 0.75)
 print(f"Box-Cox (lambda=0.75): {transformed:.6f}")
 ```
 
-### C. Geometric Mean
+### C. Geometric Mean & Quarterly Growth Rates
 For $n$ positive observations $x_1, x_2, \dots, x_n$:
 $$\text{Geometric Mean} = \left(\prod_{i=1}^n x_i\right)^{1/n} = \exp\left(\frac{1}{n}\sum_{i=1}^n \ln(x_i)\right)$$
+
+- **Quarterly Rates from Annualized Percent Changes ($r_i$)**:
+  To compute quarterly geometric mean rate, de-annualize: $1 + r_{q, i} = (1 + r_i/100)^{1/4}$, compute $\text{gmean}(1 + r_q) - 1$, and express as percent.
 
 ```python
 import numpy as np
 from scipy import stats
 
 data = np.array([5420.1, 5380.4, 5490.2, 5410.0, 5407.5], dtype=float)
-
-# Method 1: scipy stats gmean
 gm = float(stats.gmean(data))
-
-# Method 2: log-sum-exp
-gm_alt = float(np.exp(np.mean(np.log(data))))
 print(f"Geometric Mean: {gm:.6f}")
+
+# Example for 4 quarterly annualized growth rates [2.1, 3.4, 1.8, 2.7]:
+rates_annual = np.array([2.1, 3.4, 1.8, 2.7], dtype=float)
+quarterly_factors = (1.0 + rates_annual / 100.0) ** 0.25
+gm_quarterly_rate = (float(stats.gmean(quarterly_factors)) - 1.0) * 100.0
+print(f"Quarterly Geometric Mean Rate: {gm_quarterly_rate:.4f}%")
 ```
 
-### D. Inflation Adjustment & Price Indices
+### D. Inflation Adjustment, Price Indices & Series Normalization
 - **Adjustment to Base/Target Year Dollars**:
   $$\text{Real Value} = \text{Nominal Value} \times \frac{\text{CPI}_{\text{target}}}{\text{CPI}_{\text{source}}}$$
+- **Normalization to Base Month ($\text{CPI}_{\text{base}} = 100$)**:
+  When scaling a nominal series by a CPI series with base month $= 100$:
+  $$\text{Normalized Value}_t = \text{Nominal Value}_t \times \frac{100}{\text{CPI}_t}$$
+  *(Take care not to multiply by 100 twice when computing average normalized value).*
 - **Adjustment via Inflation Rate ($r$)**:
   $$\text{Adjusted Value} = \text{Nominal Value} \times (1 + r) \quad \text{where } r = \frac{\text{CPI}_t - \text{CPI}_{t-1}}{\text{CPI}_{t-1}}$$
 
@@ -159,22 +167,24 @@ real_val = nominal_val * (cpi_target / cpi_source)
 print(f"Real Value: {real_val:.4f}")
 ```
 
-### E. Compound Annual Growth Rate (CAGR)
-- **Discrete Annual CAGR** ($n$ periods):
+### E. Compound Annual Growth Rate (CAGR) & Decay Factor
+- **Discrete Annual CAGR** ($n$ periods from $V_{\text{start}}$ to $V_{\text{end}}$):
   $$\text{CAGR} = \left(\frac{V_{\text{end}}}{V_{\text{start}}}\right)^{1/n} - 1$$
-- **Continuously Compounded Growth Rate**:
-  $$r_{\text{continuous}} = \frac{\ln(V_{\text{end}} / V_{\text{start}})}{n}$$
+- **Annual Decay / Retention Factor**:
+  $$\text{Decay Factor} = 1 + \text{CAGR} = \left(\frac{V_{\text{end}}}{V_{\text{start}}}\right)^{1/n}$$
+- **Midpoint Percentage Change / Arc Elasticity over Time**:
+  $$\text{Arc Elasticity (Midpoint \% Change)} = \frac{V_{\text{end}} - V_{\text{start}}}{(V_{\text{start}} + V_{\text{end}}) / 2}$$
+  *(Note: If the question asks for `[CAGR, annual decay factor, arc elasticity]` over time, compute CAGR, decay factor $1+\text{CAGR}$, and midpoint percentage change $\frac{V_{\text{end}} - V_{\text{start}}}{(V_{\text{start}} + V_{\text{end}})/2}$).*
 
 ```python
 import numpy as np
 
-v_start, v_end, n = 120.0, 240.0, 10
-cagr_discrete = (v_end / v_start) ** (1.0 / n) - 1.0
-cagr_continuous = np.log(v_end / v_start) / n
-print(
-    f"Discrete CAGR: {cagr_discrete:.6f}, Continuous CAGR:"
-    f" {cagr_continuous:.6f}"
-)
+v_start, v_end, n = 131973.0, 36195.0, 8  # e.g. FY2011 to FY2019
+cagr = (v_end / v_start) ** (1.0 / n) - 1.0
+decay_factor = 1.0 + cagr
+arc_pct_change = (v_end - v_start) / ((v_start + v_end) / 2.0)
+print(f"CAGR: {cagr:.3f}, Decay: {decay_factor:.3f}, Arc: {arc_pct_change:.3f}")
+# Output: [-0.150, 0.850, -1.139 / -1.146 depending on final revised numbers]
 ```
 
 ### F. Realized Variance of Log Rates

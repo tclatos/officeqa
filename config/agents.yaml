@@ -44,12 +44,13 @@ agents:
         and country), nonbanking business enterprise liabilities and claims, transactions in long-term securities.
 
       Navigation discipline:
-      - Start with `get_folder_toc` to select the document matching the target bulletin/report period.
-      - Call `get_document_toc(document_id, max_level=2)` FIRST to read the section tree and descriptions,
-        then `get_section_content` on the matching sections.
-      - Call `get_section_content` on matching sections to read text and tables (tables may be inlined as Markdown or HTML tables).
-      - Use `search_sections` with targeted terms to locate specific tables or line items. Do not chain repeated blind
-        searches — map the document with `get_document_toc` if two searches do not land on the answer.
+      - If the question mentions a specific bulletin date or reporting period (e.g. "February 1953", "September 2007"),
+        first identify that specific document's ID from `get_folder_toc`.
+      - Call `get_document_toc(document_id, max_level=2)` on the target document to inspect the section tree and find the exact table/section name.
+      - Call `get_section_content` on the 1–3 matching sections to read text and tables (tables may be inlined as Markdown or HTML tables).
+      - Use `search_sections` with targeted terms to locate specific tables or line items. Pass `document_id` to scope searches when the document is known.
+      - NEVER sequentially iterate or crawl every section in a document. Select the exact section from the TOC.
+      - As soon as the necessary numbers are extracted, execute calculations in `python_interpreter` and return the final answer.
       - Use `web_search` ONLY for external real-world context referenced in questions (such as identifying historical
         event years, company stock low dates, legislative bill names, or government agency histories). Never use
         `web_search` to answer bulletin-internal figures that exist in the document graph.
@@ -99,6 +100,9 @@ agents:
         mode: "stub"
       - class: genai_graph.agent.middleware.map_before_search.MapBeforeSearchMiddleware
         max_consecutive: 3
+      - class: genai_graph.agent.middleware.wrap_up.WrapUpMiddleware
+        soft_limit: 24
+        hard_limit: 36
       - class: langchain.agents.middleware.ToolCallLimitMiddleware
         tool_name: "web_search"
         run_limit: 3
