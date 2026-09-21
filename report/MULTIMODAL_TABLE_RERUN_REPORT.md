@@ -205,9 +205,9 @@ To address the remaining 24 failure cases and drive OfficeQA accuracy into the 8
    - *Mechanism*: When `get_section_content` slices large tables (e.g., using `start_line` / `max_lines`), it should automatically prepend the table's header row (`<thead>...</thead>` or Markdown header) to every slice.
    - *Impact*: Ensures the agent always retains column definitions and unit qualifiers, preventing sub-column row-alignment confusion (`UID0039`, `UID0059`, `UID0214`, `UID0226`).
 
-4. **Longitudinal Revision Rule in Agent Skill (`officeqa-qa`)**:
-   - *Mechanism*: Codify explicit graph traversal guidance: *When querying historical figures for year $Y$, locate the most recent bulletin issue in the graph that tabulates year $Y$, as Treasury tables routinely publish revised/final numbers in subsequent editions.*
-   - *Impact*: Resolves preliminary vs. revised historical table mismatches (`UID0058`, `UID0172`, `UID0238`).
+4. **Promoting Longitudinal Revision Rules into the Core System Prompt**:
+   - *Status & Mechanism*: While the revision rule (*"prefer the newest available bulletin covering historical year $Y$"*) was previously codified in `skills/custom/officeqa-qa/SKILL.md`, deep agents load skills on-demand via `read_file`. When an agent jumps directly into graph navigation without explicitly reading the skill file first, it may default to the first matching historical bulletin.
+   - *Action Applied*: The revision preference rule has now been promoted directly into the agent's core `system_prompt` in `config/agents.yaml`. This ensures that every run automatically enforces querying the latest retrospective issue for revised historical data (`UID0058`, `UID0172`, `UID0238`) without requiring an explicit skill fetch step.
 
 ---
 

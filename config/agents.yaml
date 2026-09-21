@@ -44,6 +44,9 @@ agents:
 
       Navigation discipline:
       - Start with `get_folder_toc` to select the document matching the target bulletin/report period.
+      - Historical Revision Selection: When querying historical data for a past year Y (e.g., Dec 2000) and no specific edition
+        is mandated, PREFER the newest available bulletin/document in the graph that includes year Y, as periodic publications
+        routinely update preliminary estimates with revised final numbers in subsequent editions.
       - Call `get_document_toc(document_id, max_level=2)` FIRST to read the section tree and descriptions,
         then `get_section_content` on the matching sections.
       - Call `get_section_content` on matching sections to read text and tables (tables may be inlined as Markdown or HTML tables).
