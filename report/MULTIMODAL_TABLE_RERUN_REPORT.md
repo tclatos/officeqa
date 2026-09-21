@@ -115,7 +115,7 @@ While the multimodal and HTML table upgrades resolved visual chart questions and
 │  ├── Multi-term BM25 over-filtering     ├── Formula convention divergence   │
 │  ├── Sub-column category ambiguity      ├── Unit scaling & index multipliers│
 │  ├── Historical revision vs snapshot    └── Complex statistical compounding │
-│  └── Multi-entity catalog disconnect                                        │
+│  └── Section granularity vs isolation                                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -139,9 +139,10 @@ In these runs, the agent executed valid reasoning and calculations, but retrieve
    - *Example (`UID0172`)*: UK Total Liabilities for June 2002 was reported as 222,321 in the initial bulletin, but revised to ~205,234.52 in subsequent issues, leading to a final GBP sum of 383,422.99M vs. gold 372,507.20M.
    - *Example (`UID0238`)*: Marketable maturities were reported differently across initial and retrospective debt schedules ($95,068M vs. gold $80,686M).
 
-4. **Multi-Entity Disconnect (Section-Only vs. Table/Image Catalog)**:
-   - *Failure Mechanism*: The current `search_sections` tool queries only `MarkdownSection` nodes. Specific table properties (e.g., `table_id`, column names, captions) and image metadata (e.g., `image_id`, diagram tags) are not directly searchable via specialized entity tools during agent reasoning.
-   - *Example (`UID0227`)*: The agent searched for *United States sales and redemptions outstanding*, but landed on the general interest-bearing debt table, extracting $67,185M instead of the specific savings bond sales/redemption series ($261M).
+4. **Section-Level Retrieval Granularity vs. Table/Image Isolation**:
+   - *Failure Mechanism*: `search_sections` operates at the `MarkdownSection` level. While all table text, captions, and image descriptions are inlined in the section Markdown and indexed in BM25/FTS, long sections frequently contain 3–5 separate tables and extensive commentary (2,000–8,000 tokens). Returning the entire section forces the agent to parse through multi-table text, which can lead to grabbing numbers from an adjacent table within the same section.
+   - *Example (`UID0227`)*: The section contained multiple debt tables; because the whole section was loaded, the agent extracted from the general interest-bearing debt table rather than isolating the savings bond sales/redemptions schedule ($67,185M vs. gold $261M).
+   - *Example (`UID0150`)*: The section contained several market quotation sub-schedules (MQ-1 through MQ-4); multi-table context clutter led to extracting the wrong quotation series.
 
 ---
 
