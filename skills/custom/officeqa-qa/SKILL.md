@@ -213,6 +213,55 @@ print(f"Gini: {val:.6f}")
 $$\text{Weighted Average} = \frac{\text{Total Value of Currency in Circulation}}{\text{Total Number of Bills in Circulation}} = \frac{\sum V_i}{\sum (V_i / D_i)}$$
 where $D_i \in [1, 2, 5, 10, 20, 50, 100, 500, 1000, 5000, 10000]$ and $V_i$ is the dollar value of denomination $D_i$.
 
+### I. Arc Price Elasticity & Midpoint Formula
+For quantities $q_1, q_2$ and prices $p_1, p_2$:
+$$\text{Arc Elasticity} = \frac{(q_2 - q_1) / ((q_1 + q_2) / 2)}{(p_2 - p_1) / ((p_1 + p_2) / 2)}$$
+
+```python
+def arc_elasticity(q1: float, q2: float, p1: float, p2: float) -> float:
+  pct_change_q = (q2 - q1) / ((q1 + q2) / 2.0)
+  pct_change_p = (p2 - p1) / ((p1 + p2) / 2.0)
+  return float(pct_change_q / pct_change_p)
+
+
+print(f"Arc Elasticity: {arc_elasticity(100.0, 120.0, 50.0, 45.0):.6f}")
+```
+
+### J. Relative vs. Absolute Percentage Differences
+- **Relative Percentage Difference (Midpoint Base)**:
+  $$\text{Diff}_{\text{midpoint}} = \frac{|x_2 - x_1|}{(x_1 + x_2) / 2} \times 100$$
+- **Percentage Change Relative to Initial Base ($x_1$)**:
+  $$\text{Change} = \frac{x_2 - x_1}{x_1} \times 100$$
+
+```python
+def percent_diff(
+    x1: float, x2: float, mode: str = "midpoint"
+) -> tuple[float, float]:
+  midpoint_diff = (abs(x2 - x1) / ((x1 + x2) / 2.0)) * 100.0
+  base_diff = (abs(x2 - x1) / x1) * 100.0
+  return midpoint_diff, base_diff
+
+
+mid_d, base_d = percent_diff(528.0, 693.0)
+print(f"Midpoint Difference: {mid_d:.2f}%, Base Difference: {base_d:.2f}%")
+```
+
+### K. Parametric Lower-Tail Loss (Value-at-Risk, 1% Probability)
+For a series of historical holdings or changes with sample mean $\mu$ and sample standard deviation $\sigma$:
+$$\text{Loss}_{1\%} = 2.326 \times \sigma$$
+(using standard normal $z_{0.01} \approx 2.3263$, or $t$-distribution quantile).
+
+```python
+import numpy as np
+from scipy import stats
+
+holdings = np.array([45.2, 48.0, 52.1, 49.3, 47.8], dtype=float)
+sigma = float(np.std(holdings, ddof=1))
+z_01 = float(stats.norm.ppf(0.99))  # 2.3263
+loss_1pct = z_01 * sigma
+print(f"1% Lower-Tail Loss: {loss_1pct:.4f}")
+```
+
 ---
 
 ## 5. Citation & Answer Formatting

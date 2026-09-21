@@ -205,48 +205,36 @@ To address the remaining 24 failure cases and drive OfficeQA accuracy into the 8
    - *Mechanism*: When `get_section_content` slices large tables (e.g., using `start_line` / `max_lines`), it should automatically prepend the table's header row (`<thead>...</thead>` or Markdown header) to every slice.
    - *Impact*: Ensures the agent always retains column definitions and unit qualifiers, preventing sub-column row-alignment confusion (`UID0039`, `UID0059`, `UID0214`, `UID0226`).
 
-4. **Promoting Longitudinal Revision Rules into the Core System Prompt**:
-   - *Status & Mechanism*: While the revision rule (*"prefer the newest available bulletin covering historical year $Y$"*) was previously codified in `skills/custom/officeqa-qa/SKILL.md`, deep agents load skills on-demand via `read_file`. When an agent jumps directly into graph navigation without explicitly reading the skill file first, it may default to the first matching historical bulletin.
-   - *Action Applied*: The revision preference rule has now been promoted directly into the agent's core `system_prompt` in `config/agents.yaml`. This ensures that every run automatically enforces querying the latest retrospective issue for revised historical data (`UID0058`, `UID0172`, `UID0238`) without requiring an explicit skill fetch step.
+4. **Enforcing Upfront Domain Skill Loading (`officeqa-qa`)**:
+   - *Status & Mechanism*: The revision rule (*"prefer the newest available bulletin covering historical year $Y$"*) and core financial formulas were already codified in `skills/custom/officeqa-qa/SKILL.md`. However, because deep agents load skills on-demand, an agent that started searching without explicitly reading the skill first would occasionally default to the first matching historical bulletin or write ad-hoc Python without standardized templates.
+   - *Action Applied*: Updated the agent's initial prompt instruction in `config/agents.yaml` to explicitly direct it to read `officeqa-qa` (`/custom/officeqa-qa/SKILL.md`) at the start of its turn. This keeps the core system prompt concise while ensuring domain conventions and calculation templates are consistently loaded.
 
 ---
 
-### 7.2 Deterministic Financial Calculator Bindings & Interpreter Math Prompting
+### 7.2 Mathematical Formula Templates in Domain Skills & Python Verification
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│               DETERMINISTIC COMPUTATION & VERIFICATION PIPELINE             │
+│               COMPREHENSIVE SKILL FORMULAS & PYTHON PIPELINE                │
 │                                                                             │
 │  [Extracted Table Data]                                                     │
 │          │                                                                  │
-│          ├──► Deterministic Tool Bindings (CAGR, Arc Elasticity, Gini, VaR) │
-│          ├──► Structured Python Verification (Print units, check scaling)   │
+│          ├──► Skill Formula Templates (CAGR, Arc Elasticity, Gini, VaR)     │
+│          ├──► Structured Python Execution (Print variables, units, scale)   │
 │          └──► Dual-Convention Reporting (State base & midpoint formulations)│
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **Deterministic Statistical & Financial Tool Bindings (`officeqa.tools.calculator`)**:
-   - *Mechanism*: Equip the agent with pre-tested, deterministic Python tool bindings for common econometric and financial formulas:
-     ```python
-     def financial_cagr(start_value: float, end_value: float, num_years: float) -> float:
-         """Compute Compound Annual Growth Rate."""
-         return (end_value / start_value) ** (1.0 / num_years) - 1.0
-
-     def arc_elasticity(q1: float, q2: float, p1: float, p2: float) -> float:
-         """Compute midpoint arc price elasticity: ((Q2-Q1)/((Q2+Q1)/2)) / ((P2-P1)/((P2+P1)/2))."""
-         return ((q2 - q1) / ((q2 + q1) / 2.0)) / ((p2 - p1) / ((p2 + p1) / 2.0))
-
-     def percent_difference(val_a: float, val_b: float, convention: str = "midpoint") -> float:
-         """Compute absolute percentage difference using midpoint or base convention."""
-         if convention == "midpoint":
-             return abs(val_a - val_b) / ((val_a + val_b) / 2.0) * 100.0
-         return abs(val_a - val_b) / val_a * 100.0
-
-     def gini_coefficient(values: list[float]) -> float:
-         """Compute exact Gini coefficient for discrete distributions."""
-         ...
-     ```
-   - *Impact*: Eliminates ad-hoc script errors on standard formulas (`UID0101`, `UID0113`, `UID0201`, `UID0220`).
+1. **Comprehensive Formula Templates in `officeqa-qa` Skill**:
+   - *Why Math Errors Occurred*:
+     - The agent did not always read the skill upfront before writing ad-hoc Python in `python_interpreter`.
+     - Certain specialized formulas (e.g., *arc price elasticity midpoint formula*, *relative vs. base percentage difference*, and *1% lower-tail Value-at-Risk*) were not previously codified as explicit code templates in the skill.
+   - *Action Applied*: Expanded `skills/custom/officeqa-qa/SKILL.md` (Section 4) with tested, standard Python implementations for:
+     - **Arc Price Elasticity** (`UID0101`): Midpoint formula `((q2-q1)/((q1+q2)/2)) / ((p2-p1)/((p1+p2)/2))`.
+     - **Relative vs. Absolute Percent Differences** (`UID0113`, `UID0220`, `UID0221`): Midpoint difference vs. initial base change.
+     - **Parametric Lower-Tail Loss (VaR 1%)** (`UID0165`): Standard normal quantile $z_{0.01} = 2.3263 \times \sigma$.
+     - **De-Annualized Quarterly Compounding** (`UID0110`): $1 + r_q = (1 + r_a)^{1/4}$.
+     - **Gini Coefficient** (`UID0201`): Normalized discrete Gini formula.
 
 2. **Structured Math Prompting & Sanity Verification Protocol**:
    - *Mechanism*: Update the agent system prompt to enforce a mandatory 4-step calculation checklist when invoking `python_interpreter`:
