@@ -24,8 +24,13 @@ genai-tk = { path = "../genai-tk", editable = true }
 genai_graph = { path = "../genai-graph", editable = true }
 [tool.uv]
 package = true
+default-groups = ["dev"]
 
-
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
 
 [build-system]
 requires = ["hatchling"]
