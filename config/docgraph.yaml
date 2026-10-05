@@ -4,7 +4,9 @@ default_profile: default
 docgraph_profiles:
   default:
     description: "Multimodal Document Graph for OfficeQA Treasury Bulletins with HTML tables and VLM image understanding"
-    markdownize_profile: best
+    # Bench conversion dispatches corpus sources through this route table
+    # (config/ingest_routes.yaml) instead of the markdownize_profile ladder.
+    ingest_routes: officeqa
 
     paths:
       sources_dir: ${paths.data_root}/pdfs
