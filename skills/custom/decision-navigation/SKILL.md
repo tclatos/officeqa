@@ -26,10 +26,12 @@ full text as an **evidence pack** with per-section relevance scores.
    "[text omitted: N chars over pack budget]" were selected but not inlined — fetch
    exactly those with `get_section_content(section_ids=...)`. Never re-read an evicted
    pack through `read_file`; that multiplies tokens per page.
-5. **Fall back only on low confidence.** If the pack (still) reports
-   `low_confidence: true` — or `navigation failed` — use `get_document_toc` →
-   `get_section_content` to navigate yourself. Do not interleave fallback tools with
-   successful navigation.
+5. **Fall back to the graph tools when the pack is insufficient.** If the pack (still)
+   reports `low_confidence: true`, `navigation failed`, or simply does not contain the
+   table you need, navigate yourself with the classic loop: `list_documents` /
+   `get_folder_toc` → `get_document_toc` → `get_section_content` (and `search_sections`
+   with 2–3 keywords). Re-navigating with `hints` is the cheapest recovery, but never
+   refuse to answer just because the pack was thin — the graph tools are always available.
 6. **Visual questions**: figure/chart data is not in section text. Locate the
    candidate section (pack or one TOC pass) and use `query_image` on the referenced
    image early (budget: max 3 calls).

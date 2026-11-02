@@ -22,6 +22,17 @@ nlp:
     en: en_core_web_md
     fr: fr_core_news_sm
 
+# Embedded graph engine (Ladybug) settings for every Document Graph tool call.
+# The buffer pool is bounded explicitly: the engine default (~80% of system RAM)
+# competes with the agent's Python heap on concurrent bench runs, which surfaces
+# as "buffer pool is full" tool errors and wedges the run. Override per run with
+# LADYBUG_BUFFER_POOL_SIZE (e.g. LADYBUG_BUFFER_POOL_SIZE=4GB).
+ladybug:
+  # 4GB measured bound: two concurrent navigators (concurrency 2) share one pool and
+  # need the HNSW (59k x 1024-d chunks) + FTS indexes resident; 2GB exhausts under
+  # that load while 4GB is stable across repeated passes.
+  buffer_pool_size: ${oc.env:LADYBUG_BUFFER_POOL_SIZE,4GB}
+
 
 # :merge: lists gitignore-style patterns (relative to this directory) for YAML
 # files to load and deep-merge into the config, in sorted order.

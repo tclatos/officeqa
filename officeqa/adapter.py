@@ -55,8 +55,8 @@ Tiers:
 - "error_category" = when correctness is "partial" or "incorrect", categorize the primary root cause:
   * "missing_ocr_or_visual_chart": question requires reading a visual chart, line plot, graph, or diagram missing/unreadable in text OCR transcript.
   * "calculation_or_math_error": agent found the relevant figures, but made an arithmetic, formula, or rounding calculation mistake.
-  * "retrieval_or_lookup_error": agent retrieved or referenced the wrong table, row, date, or failed to find the relevant section.
-  * "halted_or_empty_response": agent timed out, looped, hit tool recursion limits, or returned an empty/aborted response.
+  * "retrieval_or_lookup_error": agent searched the corpus but retrieved/referenced the wrong table, row, date or period (use this also when the agent reports the figure is absent from the documents: it looked and did not find it).
+  * "halted_or_empty_response": ONLY when the answer is empty, is a bare status narration with no findings, or the run crashed/aborted mid-turn. Do NOT use this category for a substantive answer that states a number, a conclusion, or an explicit "information not available in the documents" verdict — those are retrieval_or_lookup_error or calculation_or_math_error.
 """
 
 

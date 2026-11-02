@@ -18,16 +18,27 @@ from langchain_core.tools import BaseTool
 def create_calculator_tools(
     authorized_imports: list[str] | None = None,
     timeout_seconds: int | None = 30,
+    executor_type: str = "auto",
 ) -> list[BaseTool]:
     """Factory returning Python code execution tools configured for OfficeQA.
 
     Authorizes numpy, pandas, scipy, and standard math/statistics libraries.
+
+    Args:
+        authorized_imports: Extra module names allowed inside the executor.
+        timeout_seconds: Max execution time per code block.
+        executor_type: 'auto' (Docker sandbox when available), 'docker', or 'local'.
+            Benchmark runs should pass 'local': the Docker sandbox backend is bound
+            to one asyncio event loop, while each bench question runs its own
+            `asyncio.run` loop in its own thread — cross-loop awaits hang with no
+            timeout (observed as a 100-minute silent wedge on the 33-question run).
     """
     default_imports = ["numpy", "pandas", "scipy", "math", "statistics", "re", "json"]
     effective_imports = list(set((authorized_imports or []) + default_imports))
     return create_python_executor_tools(
         additional_authorized_imports=effective_imports,
         timeout_seconds=timeout_seconds,
+        executor_type=executor_type,
     )
 
 

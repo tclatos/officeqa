@@ -15,7 +15,8 @@ docgraph_profiles:
       saved_markdown_dir: ~/OneDrive/prj/officeqa/markdown
 
     ladybug:
-      buffer_pool_size: ${oc.env:LADYBUG_BUFFER_POOL_SIZE,8GB}
+      # Keep in sync with the top-level `ladybug.buffer_pool_size` in app_conf.yaml.
+      buffer_pool_size: ${oc.env:LADYBUG_BUFFER_POOL_SIZE,4GB}
 
     llms:
       summary: deepseek-v4-flash-0731(none)@openrouter  # Structure discovery & section descriptions (reasoning disabled)

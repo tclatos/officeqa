@@ -45,7 +45,9 @@ bench_profiles:
       limit: null
 
     runner:
-      concurrency: 6
+      # 2: host memory is the binding constraint. At 4 the 2026-11-02 run exhausted
+      # the Ladybug buffer pool after 17/33 questions and wedged on retries.
+      concurrency: 2
       folder_id: null
       monitoring: null
 

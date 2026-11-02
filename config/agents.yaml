@@ -166,18 +166,31 @@ agents:
     tools:
       # All navigator configuration lives HERE, as tool-factory kwargs:
       - factory: genai_graph.agent.decision_navigation.create_decision_navigation_tools
-        decision_model: fast   # clef_flash@openrouter (decision.models tag in genai-tk config)
+        # 'accurate' = jev@openrouter (TypeSafe System One). Chosen for the
+        # success-parity investigation: a stronger decision model isolates
+        # navigator quality from synthesis failures.
+        decision_model: accurate
         beam_width: 3
-        top_r_sections: 6
-        min_confidence: 0.5
+        top_r_sections: 10          # recall for period-specific tables in long bulletins
+        min_confidence: 0.5         # answerable-gate threshold
+        # Per-level gates measured from the traces: correct L1 picks score 0.26-0.77,
+        # correct L2 picks 0.89-0.96, so an absolute 0.5 gate misfired on L1.
+        l1_min_confidence: 0.15
+        l2_min_confidence: 0.5
+        descent_min_confidence: 0.2
+        include_summaries: true     # richer routing text for L2
         max_depth: 2
         candidate_cap: 48
         prefilter: hybrid
         pack_char_budget: 10000   # must stay clearly BELOW ObservationTruncation max_chars (16000): rendered pack = budget + headers + trace footer
         l2_workers: 3
+        trace_top_k: 12           # record per-candidate probabilities for offline tuning
         domain_context_file: ${paths.project}/skills/custom/officeqa-qa/decision-routing.md
       - genai_tk.agents.tools.langchain.search_tools_factory.create_search_tool
-      - officeqa.tools.calculator.create_calculator_tools
+      # Local executor: the Docker sandbox backend is asyncio-bound and hangs when
+      # several bench questions each run their own event loop (silent wedge).
+      - factory: officeqa.tools.calculator.create_calculator_tools
+        executor_type: local
     skill_directories:
       - ${paths.project}/skills/custom
       - ${paths.project}/skills/community
@@ -190,25 +203,28 @@ agents:
         max_chars: 16000
         head_ratio: 0.8
       - class: genai_tk.agents.langchain.middleware.deduplicate_middleware.DeduplicateToolCallsMiddleware
-        tools: ["get_document_toc", "get_section_content", "query_image", "web_search", "navigate_folder"]
+        tools: ["get_document_toc", "get_folder_toc", "list_documents", "search_sections", "get_section_content", "query_image", "web_search", "navigate_folder"]
         mode: "stub"
+      # Baseline-parity limits: the previous 8/12 pairing truncated legitimate
+      # multi-period investigations, producing narration-style non-answers.
       - class: genai_tk.agents.langchain.middleware.wrap_up_middleware.WrapUpMiddleware
-        soft_limit: 8
-        hard_limit: 12
-        # Cross-page auto-extension capped so the forced final answer always lands
-        # below the recursion backstop (16 calls * ~3 steps/call + finalize < 64).
-        extended_soft_limit: 12
-        extended_hard_limit: 16
+        soft_limit: 16
+        hard_limit: 24
+        extended_soft_limit: 24
+        extended_hard_limit: 32
       - class: langchain.agents.middleware.ToolCallLimitMiddleware
         tool_name: "web_search"
         run_limit: 3
         exit_behavior: "continue"
-    # Pack-first: graph discovery tools are replaced by navigate_folder, and the
-    # filesystem exploration tools are stripped so a disappointing pack leads to
-    # re-navigation with hints instead of grep/glob/ls flailing against the
-    # fs-denied corpus dir (observed 8-grep loops in the validation run).
+    # Pack-first, with the baseline's discovery loop kept as the recovery path:
+    # the graph tools (get_folder_toc / get_document_toc / search_sections /
+    # get_section_content) stay available, because excluding them left the agent
+    # with no way to enumerate the corpus when a pack disappointed it (answers
+    # explicitly asked for "a document-listing tool").
+    # Only the filesystem exploration tools are stripped: they were used to flail
+    # against the fs-denied corpus dir and the skills workspace (8-grep loops).
     # read_file stays: SkillsMiddleware reads SKILL.md through it.
-    excluded_tools: [get_folder_toc, search_sections, list_documents, ls, glob, grep]
+    excluded_tools: [ls, glob, grep]
     checkpointer:
       type: none
     backend:
@@ -219,10 +235,10 @@ agents:
       - operations: ["read", "write"]
         paths: ["/officeqa/data/**"]
         mode: deny
-    # Backstop only: WrapUp hard limit 12 tool calls (auto-extended 20 cross-page)
-    # consumes ~54 LangGraph steps (~2.7 steps/call observed); recursion_limit must
+    # Backstop only: WrapUp hard limit 24 tool calls (auto-extended 32 cross-page)
+    # consumes ~96 LangGraph steps (~3 steps/call observed); recursion_limit must
     # stay ABOVE that so wrap-up's forced final answer fires before LangGraph aborts.
-    recursion_limit: 64
+    recursion_limit: 128
 
   # DeerFlow agent that answers OfficeQA questions by navigating the Document Graph.
   deerflow:

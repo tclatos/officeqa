@@ -72,6 +72,9 @@ Many questions reference external real-world events, legislation, inflation seri
 - **Calculation Precision & Python Execution**:
   - Always use `python_interpreter` for non-trivial arithmetic, regressions, transformations, and statistical metrics to eliminate floating-point and rounding errors.
   - Python scripts must include `print(...)` statements to output final computed values.
+- **Intermediate Rounding Discipline**:
+  - Round each intermediate value to the precision the question asks for BEFORE combining them (e.g. quarterly figures to the nearest tenth when the answer is asked to the nearest tenth), then compute the final metric from the rounded values.
+  - State the rounding rule you applied (e.g. "quartiles rounded to 1 decimal, then averaged") so the convention is verifiable. If a metric admits two conventions (rounded vs unrounded intermediates), report both values and mark the primary one.
 
 ---
 
