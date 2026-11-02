@@ -203,7 +203,12 @@ agents:
         tool_name: "web_search"
         run_limit: 3
         exit_behavior: "continue"
-    excluded_tools: [get_folder_toc, search_sections, list_documents]
+    # Pack-first: graph discovery tools are replaced by navigate_folder, and the
+    # filesystem exploration tools are stripped so a disappointing pack leads to
+    # re-navigation with hints instead of grep/glob/ls flailing against the
+    # fs-denied corpus dir (observed 8-grep loops in the validation run).
+    # read_file stays: SkillsMiddleware reads SKILL.md through it.
+    excluded_tools: [get_folder_toc, search_sections, list_documents, ls, glob, grep]
     checkpointer:
       type: none
     backend:
