@@ -1,0 +1,93 @@
+########################
+# Decision Models (System One) Registry
+########################
+
+# Registered Decision Models (OpenRouter, TypeSafe, etc.)
+
+decision_models:
+  registry:
+    - model_id: clef_flash
+      providers:
+        - openrouter: cloudflare/clef-flash
+      context_length: 65536
+      max_questions: 64
+      description: "Cloudflare Clef Flash 9B decision model (fast, sub-100ms, multimodal, max 64 questions)"
+
+    - model_id: clef
+      providers:
+        - openrouter: cloudflare/clef
+      context_length: 65536
+      max_questions: 64
+      description: "Cloudflare Clef 27B decision model (max 64 questions)"
+
+    - model_id: jev
+      providers:
+        - openrouter: typesafe/jev-1.13
+        - typesafe: jev-latest
+        - edenai: typesafe/jev-latest
+      context_length: 64000
+      max_questions: 32
+      description: "TypeSafe Jev System One model (recommended up to 32 questions per request)"
+
+    - model_id: laya
+      providers:
+        - laya: laya
+      context_length: 1024
+      max_questions: 64
+      description: "Laya multilingual zero-latency System One decision model with Router (ModernBERT/mmBERT)"
+
+    - model_id: laya_multilingual
+      providers:
+        - laya: multilingual
+      context_length: 8192
+      max_questions: 64
+      description: "Laya Multilingual model (mmBERT-base, 100+ languages, up to 8k context)"
+
+    - model_id: laya_typed
+      providers:
+        - laya: typed-decisions
+      context_length: 1024
+      max_questions: 64
+      description: "Laya Typed Decisions fine-tuned model (0.766 benchmark accuracy)"
+
+    - model_id: solar_decide_flash
+      providers:
+        - openrouter: upstage/solar-decide-flash
+      context_length: 524288
+      max_questions: 64
+      description: "Upstage Solar Decide Flash (524K context, max 64 questions)"
+
+    - model_id: mercury_decide
+      providers:
+        - openrouter: inception/mercury-decide:free
+      context_length: 65536
+      max_questions: 64
+      description: "Inception Mercury Decide (Free tier)"
+
+    - model_id: pplx_decider
+      providers:
+        - openrouter: perplexity/pplx-decider-v1.1-27b
+      context_length: 262144
+      max_questions: 128
+      description: "Perplexity Decider V1.1 27B (max 128 questions)"
+
+    - model_id: gpt_6_luna
+      providers:
+        - openai: gpt-6-luna
+      context_length: 128000
+      max_questions: 64
+      description: "OpenAI Decisions model (gpt-6-luna)"
+
+    - model_id: gpt_6_sol
+      providers:
+        - openai: gpt-6-sol
+      context_length: 128000
+      max_questions: 64
+      description: "OpenAI Decisions model (gpt-6-sol)"
+
+    - model_id: fake_decision
+      providers:
+        - fake: fake_decision
+      context_length: 4096
+      max_questions: 32
+      description: "Fake deterministic decision model for offline unit tests"

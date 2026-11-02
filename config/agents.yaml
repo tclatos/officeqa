@@ -119,6 +119,100 @@ agents:
         mode: deny
     recursion_limit: 160
 
+  # Decision-model-navigated variant (genai-graph docs/studies/decision_model_navigation.md):
+  # a Clef-flash decision model replaces the LLM navigation loop — one
+  # `navigate_folder` call returns a scored evidence pack; the agent only synthesizes.
+  # The deep type is required for the skill system; planning is off (navigation is
+  # deterministic). The bench runner injects the graph tools (fallback) automatically.
+  decision:
+    harness: langchain
+    name: "OfficeQA Decision-Navigated Analyst"
+    type: deep
+    llm: glm_5.3_Flash@openrouter
+    description: "Synthesis agent over decision-model-navigated evidence packs."
+    system_prompt: |
+      You are an expert analyst answering OfficeQA questions across documents (e.g. Treasury Bulletins,
+      government financial reports, economic statistics). Navigation over the Document Graph is performed
+      by a decision model via `navigate_folder`: each call returns an EVIDENCE PACK — the selected sections'
+      full text with relevance scores and a navigation trace.
+
+      Read your domain skill `officeqa-qa` (`/custom/officeqa-qa/SKILL.md`) for units, revision rules,
+      statistical formulas and citations, and the `decision-navigation` skill for the navigation discipline.
+
+      Answering loop:
+      1. Call `navigate_folder(query=<the question verbatim>)`. Read the pack's sections and extract the
+         needed figures.
+      2. If the pack is missing something, call `navigate_folder` again with `hints` describing precisely
+         what is missing (max 2 re-navigations).
+      3. Sections whose text was omitted from the pack (over budget) are listed with a pointer — fetch them
+         selectively with `get_section_content(section_ids=...)`; do NOT re-read whole packs via read_file.
+      4. Only if the pack still reports `low_confidence: true` (or navigation failed), fall back to
+         `get_document_toc` / `get_section_content` and navigate yourself. Do not interleave fallback tools
+         with successful navigation.
+      5. For figure/chart questions, locate the candidate section and use `query_image` early (max 3 calls).
+
+      Corpus access rule:
+      - The document CORPUS is only accessible via the graph tools. Direct file access to the corpus
+        (e.g. paths under `/officeqa/data/`) is BLOCKED by policy and will return a permission-denied error.
+
+      Answering rules:
+      - Read the table carefully before you compute. Extract exact numbers from row/column intersections, verify table
+        units (thousands, millions, billions of dollars) and reporting periods (dates/fiscal years).
+      - Use `python_interpreter` for all complex arithmetic, such as OLS regressions, Box-Cox transformations, geometric means,
+        CAGR, and multi-value statistical calculations, to guarantee exact numerical accuracy.
+      - Compute requested metrics accurately with the requested rounding precision.
+      - Cite every fact with its section id `[hash::sequence]` and source filename.
+      - Answer directly: concise conclusion and primary number first, then supporting calculations and citations.
+    tools:
+      # All navigator configuration lives HERE, as tool-factory kwargs:
+      - factory: genai_graph.agent.decision_navigation.create_decision_navigation_tools
+        decision_model: fast   # clef_flash@openrouter (decision.models tag in genai-tk config)
+        beam_width: 3
+        top_r_sections: 6
+        min_confidence: 0.5
+        max_depth: 2
+        candidate_cap: 48
+        prefilter: hybrid
+        pack_char_budget: 10000   # must stay clearly BELOW ObservationTruncation max_chars (16000): rendered pack = budget + headers + trace footer
+        l2_workers: 3
+        domain_context_file: ${paths.project}/skills/custom/officeqa-qa/decision-routing.md
+      - genai_tk.agents.tools.langchain.search_tools_factory.create_search_tool
+      - officeqa.tools.calculator.create_calculator_tools
+    skill_directories:
+      - ${paths.project}/skills/custom
+      - ${paths.project}/skills/community
+    middlewares:
+      - class: genai_tk.agents.langchain.middleware.empty_response_retry.EmptyResponseRetryMiddleware
+        max_retries: 2
+        fallback_llm: claude-sonnet@openrouter
+        recovery_prompt: "Your previous response was completely empty (no text and no tool calls). Please continue your analysis and provide your response, emit the next required tool call, or deliver your final answer."
+      - class: genai_tk.agents.langchain.middleware.rich_middleware.RichToolCallMiddleware
+      - class: genai_tk.agents.langchain.middleware.observation_truncation_middleware.ObservationTruncationMiddleware
+        max_chars: 16000
+        head_ratio: 0.8
+      - class: genai_tk.agents.langchain.middleware.deduplicate_middleware.DeduplicateToolCallsMiddleware
+        tools: ["get_document_toc", "get_section_content", "query_image", "web_search", "navigate_folder"]
+        mode: "stub"
+      - class: genai_tk.agents.langchain.middleware.wrap_up_middleware.WrapUpMiddleware
+        soft_limit: 12
+        hard_limit: 20
+      - class: langchain.agents.middleware.ToolCallLimitMiddleware
+        tool_name: "web_search"
+        run_limit: 3
+        exit_behavior: "continue"
+    excluded_tools: [get_folder_toc, search_sections, list_documents]
+    checkpointer:
+      type: none
+    backend:
+      type: none
+    enable_planning: false
+    enable_file_system: true
+    fs_permissions:
+      - operations: ["read", "write"]
+        paths: ["/officeqa/data/**"]
+        mode: deny
+    recursion_limit: 100
+
   # DeerFlow agent that answers OfficeQA questions by navigating the Document Graph.
   deerflow:
     harness: deerflow

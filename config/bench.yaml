@@ -33,6 +33,27 @@ bench_profiles:
       llm: DeepSeek-V4-Pro-0813@openrouter
       concurrency: 4
 
+  decision_fast:
+    description: "DecisionRAG navigator (Clef-flash decision model) + GLM 5.3 Flash synthesis on OfficeQA corpus"
+    docgraph_profile: default
+    agent_profile: decision
+
+    files:
+      pathspecs:
+        - "*"
+      docs: []
+      limit: null
+
+    runner:
+      concurrency: 6
+      folder_id: null
+      monitoring: null
+
+    grader:
+      enabled: true
+      llm: DeepSeek-V4-Pro-0813@openrouter
+      concurrency: 4
+
   deerflow:
     description: "DeerFlow GLM 5.3 Flash agent on OfficeQA corpus"
     docgraph_profile: default
