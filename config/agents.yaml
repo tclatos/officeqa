@@ -178,7 +178,6 @@ agents:
         l1_min_confidence: 0.15
         l2_min_confidence: 0.5
         descent_min_confidence: 0.2
-        include_summaries: true     # richer routing text for L2
         max_depth: 2
         candidate_cap: 48
         prefilter: hybrid
