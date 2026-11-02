@@ -186,7 +186,6 @@ agents:
         max_retries: 2
         fallback_llm: claude-sonnet@openrouter
         recovery_prompt: "Your previous response was completely empty (no text and no tool calls). Please continue your analysis and provide your response, emit the next required tool call, or deliver your final answer."
-      - class: genai_tk.agents.langchain.middleware.rich_middleware.RichToolCallMiddleware
       - class: genai_tk.agents.langchain.middleware.observation_truncation_middleware.ObservationTruncationMiddleware
         max_chars: 16000
         head_ratio: 0.8
@@ -194,8 +193,12 @@ agents:
         tools: ["get_document_toc", "get_section_content", "query_image", "web_search", "navigate_folder"]
         mode: "stub"
       - class: genai_tk.agents.langchain.middleware.wrap_up_middleware.WrapUpMiddleware
-        soft_limit: 12
-        hard_limit: 20
+        soft_limit: 8
+        hard_limit: 12
+        # Cross-page auto-extension capped so the forced final answer always lands
+        # below the recursion backstop (16 calls * ~3 steps/call + finalize < 64).
+        extended_soft_limit: 12
+        extended_hard_limit: 16
       - class: langchain.agents.middleware.ToolCallLimitMiddleware
         tool_name: "web_search"
         run_limit: 3
@@ -211,7 +214,10 @@ agents:
       - operations: ["read", "write"]
         paths: ["/officeqa/data/**"]
         mode: deny
-    recursion_limit: 100
+    # Backstop only: WrapUp hard limit 12 tool calls (auto-extended 20 cross-page)
+    # consumes ~54 LangGraph steps (~2.7 steps/call observed); recursion_limit must
+    # stay ABOVE that so wrap-up's forced final answer fires before LangGraph aborts.
+    recursion_limit: 64
 
   # DeerFlow agent that answers OfficeQA questions by navigating the Document Graph.
   deerflow:
