@@ -8,6 +8,7 @@ dependencies = [
     "baml-py>=0.223.0",
     "genai-tk[harnessing]",
     "genai_graph",
+    "prefect-yaml",
     "datasets>=2.20",
     "pandas>=2.2",
     "httpx>=0.27",
@@ -22,6 +23,7 @@ genai-tk = { path = "../genai-tk", editable = true }
 # Local path — Markdown Knowledge Tree support is under active development in
 # the sibling genai-graph checkout; switch to a git ref once merged/pushed.
 genai_graph = { path = "../genai-graph", editable = true }
+prefect-yaml = { path = "../prefect-yaml", editable = true }
 [tool.uv]
 package = true
 default-groups = ["dev"]
