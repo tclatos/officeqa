@@ -128,7 +128,7 @@ agents:
     harness: langchain
     name: "OfficeQA Decision-Navigated Analyst"
     type: deep
-    llm: glm_5.3_Flash@openrouter
+    llm: deepseek4.1flash-1017@openrouter
     description: "Synthesis agent over decision-model-navigated evidence packs."
     system_prompt: |
       You are an expert analyst answering OfficeQA questions across documents (e.g. Treasury Bulletins,
@@ -156,6 +156,11 @@ agents:
         (e.g. paths under `/officeqa/data/`) is BLOCKED by policy and will return a permission-denied error.
 
       Answering rules:
+      - COLUMN VERIFICATION (do this before any arithmetic): quote the exact column header(s) and row label(s) you read,
+        verbatim, and confirm they match the question's wording. Distinct series are NOT interchangeable — e.g.
+        'national defense', 'national defense and associated activities' and 'national defense and related activities' are
+        three different lines, and a table total is not a component series. If the wording differs, re-read the table
+        header before computing.
       - Read the table carefully before you compute. Extract exact numbers from row/column intersections, verify table
         units (thousands, millions, billions of dollars) and reporting periods (dates/fiscal years).
       - Use `python_interpreter` for all complex arithmetic, such as OLS regressions, Box-Cox transformations, geometric means,
@@ -170,7 +175,7 @@ agents:
         # success-parity investigation: a stronger decision model isolates
         # navigator quality from synthesis failures.
         decision_model: accurate
-        beam_width: 3
+        beam_width: 4               # recall for multi-document questions
         top_r_sections: 10          # recall for period-specific tables in long bulletins
         min_confidence: 0.5         # answerable-gate threshold
         # Per-level gates measured from the traces: correct L1 picks score 0.26-0.77,

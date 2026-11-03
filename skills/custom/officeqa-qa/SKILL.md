@@ -67,6 +67,14 @@ Many questions reference external real-world events, legislation, inflation seri
 - **Scale & Unit Verification**:
   - Always verify whether table values are reported in **thousands of dollars ($ thousands)**, **millions of dollars ($ millions)**, **billions of dollars**, or **exact dollar amounts / piece counts**.
   - Always check column date headers (e.g. *June 30, 2011*, *End of July 2011*, *Fiscal Year 2010*).
+- **Column / Series Verification (before computing)**:
+  - Quote the exact column header(s) and row label(s) you read, verbatim, and check them against the question's wording.
+  - Distinct series are not interchangeable: *National defense*, *National defense and associated activities* and
+    *National defense and related activities* are three different lines; a table **total** is not a component series.
+  - When a table has nested headers (e.g. *Total Official* vs *Non-Official*, *Gross debt* vs *Debt subject to limit*,
+    *Spot* vs *Total forward net*), state which sub-column you used and why it matches the question.
+  - If the quoted header does not match the question's terms, re-read the table header (or fetch the section again)
+    before computing — do not compute from the nearest-looking number.
 - **Dual-Convention & Formula Clarity**:
   - If a ratio or metric can be interpreted narrowly vs broadly (e.g. liquidity ratio including vs excluding non-marketable liabilities), compute and state both values clearly.
 - **Calculation Precision & Python Execution**:
