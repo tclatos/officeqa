@@ -28,10 +28,10 @@ nlp:
 # as "buffer pool is full" tool errors and wedges the run. Override per run with
 # LADYBUG_BUFFER_POOL_SIZE (e.g. LADYBUG_BUFFER_POOL_SIZE=4GB).
 ladybug:
-  # 4GB measured bound: two concurrent navigators (concurrency 2) share one pool and
-  # need the HNSW (59k x 1024-d chunks) + FTS indexes resident; 2GB exhausts under
-  # that load while 4GB is stable across repeated passes.
-  buffer_pool_size: ${oc.env:LADYBUG_BUFFER_POOL_SIZE,4GB}
+  # 6GB: the pool must hold the HNSW (59k x 1024-d chunks) + FTS indexes plus the
+  # pages of a ~1GB graph while two questions run concurrently. 4GB exhausted after
+  # ~15 questions of a 33-question run once the connection leak was fixed.
+  buffer_pool_size: ${oc.env:LADYBUG_BUFFER_POOL_SIZE,6GB}
 
 
 # :merge: lists gitignore-style patterns (relative to this directory) for YAML

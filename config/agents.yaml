@@ -182,7 +182,11 @@ agents:
         candidate_cap: 48
         prefilter: hybrid
         pack_char_budget: 10000   # must stay clearly BELOW ObservationTruncation max_chars (16000): rendered pack = budget + headers + trace footer
-        l2_workers: 3
+        # 1: with 2 questions in flight, 3 L2 workers meant up to 8 simultaneous
+        # readers pinning pages in the shared buffer pool, which exhausted it after
+        # ~15 questions ("no memory could be freed"). Sequential L2 costs latency,
+        # not correctness.
+        l2_workers: 1
         trace_top_k: 12           # record per-candidate probabilities for offline tuning
         domain_context_file: ${paths.project}/skills/custom/officeqa-qa/decision-routing.md
       - genai_tk.agents.tools.langchain.search_tools_factory.create_search_tool
