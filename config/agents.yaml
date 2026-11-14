@@ -120,7 +120,7 @@ agents:
     recursion_limit: 160
 
   # Decision-model-navigated variant (genai-graph docs/studies/decision_model_navigation.md):
-  # a Clef-flash decision model replaces the LLM navigation loop — one
+  # a decision model (JEV, 'accurate' registry id) replaces the LLM navigation loop — one
   # `navigate_folder` call returns a scored evidence pack; the agent only synthesizes.
   # The deep type is required for the skill system; planning is off (navigation is
   # deterministic). The bench runner injects the graph tools (fallback) automatically.
@@ -128,7 +128,7 @@ agents:
     harness: langchain
     name: "OfficeQA Decision-Navigated Analyst"
     type: deep
-    llm: deepseek4.1flash-1017@openrouter
+    llm: glm_5.3_flash@openrouter
     description: "Synthesis agent over decision-model-navigated evidence packs."
     system_prompt: |
       You are an expert analyst answering OfficeQA questions across documents (e.g. Treasury Bulletins,
@@ -142,14 +142,19 @@ agents:
       Answering loop:
       1. Call `navigate_folder(query=<the question verbatim>)`. Read the pack's sections and extract the
          needed figures.
-      2. If the pack is missing something, call `navigate_folder` again with `hints` describing precisely
-         what is missing (max 2 re-navigations).
+      2. Re-navigation is expected, not exceptional: most packs omit sections (they arrive as pointers).
+         If the question has multiple sub-parts, or any required fact, figure, or number is still missing
+         after reading the pack, call `navigate_folder` again with `hints` naming the EXACT missing items
+         (e.g. "hints: December 1953 USCC-1 denomination table; Federal Reserve deposits column")
+         (max 2 re-navigations).
       3. Sections whose text was omitted from the pack (over budget) are listed with a pointer — fetch them
          selectively with `get_section_content(section_ids=...)`; do NOT re-read whole packs via read_file.
-      4. Only if the pack still reports `low_confidence: true` (or navigation failed), fall back to
+      4. If the pack reports `low_confidence: true` (or navigation failed), fall back to
          `get_document_toc` / `get_section_content` and navigate yourself. Do not interleave fallback tools
          with successful navigation.
-      5. For figure/chart questions, locate the candidate section and use `query_image` early (max 3 calls).
+      5. If a section contains `<!-- Image: ... -->` and the question concerns a figure, chart, plot, or
+         page-layout data point, call `query_image` on that image BEFORE answering (max 3 calls) —
+         text/OCR cannot recover exact visual data points, axes, or layout.
 
       Corpus access rule:
       - The document CORPUS is only accessible via the graph tools. Direct file access to the corpus
@@ -166,6 +171,15 @@ agents:
       - Use `python_interpreter` for all complex arithmetic, such as OLS regressions, Box-Cox transformations, geometric means,
         CAGR, and multi-value statistical calculations, to guarantee exact numerical accuracy.
       - Compute requested metrics accurately with the requested rounding precision.
+      - COMPLETENESS (critical for list/enumeration/multi-part questions): transcribe ALL rows, series, and
+        sub-answers VERBATIM and exhaustively — never consolidate two rows into one clause, never summarize a
+        list down to its highlights. Before answering, re-scan the evidence and append anything missed.
+      - NUMERIC SWEEP: before answering, scan the evidence for every numeral near a unit ($, %, millions,
+        billions, thousands, points, per capita) and verify each required value appears in your answer with
+        its exact value and context.
+      - ABSTENTION: if a sub-question or one side of a comparison is not covered in the corpus, answer the
+        covered parts and state explicitly "the corpus does not specify X" — do NOT infer the missing side,
+        and do not claim a figure exists (or does not exist) without a verbatim quote.
       - Cite every fact with its section id `[hash::sequence]` and source filename.
       - Answer directly: concise conclusion and primary number first, then supporting calculations and citations.
     tools:
@@ -186,7 +200,10 @@ agents:
         max_depth: 2
         candidate_cap: 48
         prefilter: hybrid
-        pack_char_budget: 10000   # must stay clearly BELOW ObservationTruncation max_chars (16000): rendered pack = budget + headers + trace footer
+        # 18000 (vidore R2): bigger inline packs beat pointer round-trips for multi-part questions;
+        # packs rendering past ObservationTruncation max_chars (16000) are head/tail-truncated, which
+        # is acceptable — pointers and the trace footer survive in the tail.
+        pack_char_budget: 18000
         # 1: with 2 questions in flight, 3 L2 workers meant up to 8 simultaneous
         # readers pinning pages in the shared buffer pool, which exhausted it after
         # ~15 questions ("no memory could be freed"). Sequential L2 costs latency,

@@ -137,25 +137,27 @@ class OfficeQAAdapter(BaseBenchmarkAdapter):
         return questions
 
     def fetch_document(self, doc_name: str, output_dir: Path) -> Path:
-        """Download document from OfficeQA / Hugging Face documents repository."""
+        """Download document from the OfficeQA Hugging Face dataset repository."""
         output_dir.mkdir(parents=True, exist_ok=True)
         norm_name = self.resolve_doc_name(doc_name)
         target = output_dir / f"{norm_name}.pdf"
         if target.exists() and target.stat().st_size > 0:
-            return target
+            # Earlier fetch failures silently wrote text placeholders named "*.pdf";
+            # treat anything that is not a real PDF as missing so it gets refetched.
+            with target.open("rb") as fh:
+                if fh.read(5) == b"%PDF-":
+                    return target
+            logger.warning("{} is a placeholder from a failed fetch (no %PDF header); refetching.", target.name)
+            target.unlink()
 
-        try:
-            downloaded = download_hf_file(
-                repo_id=DATASET_ID,
-                filename=f"documents/{norm_name}.pdf",
-                repo_type="dataset",
-                output_dir=output_dir,
-            )
-            return downloaded
-        except Exception as exc:
-            logger.warning("Could not fetch PDF from HF for {}: {}. Creating placeholder.", norm_name, exc)
-            target.write_text(f"Placeholder for {norm_name}", encoding="utf-8")
-            return target
+        # PDFs live under treasury_bulletin_pdfs/ in the HF repo; download_hf_file
+        # flattens the result into output_dir/<basename>.
+        return download_hf_file(
+            repo_id=DATASET_ID,
+            filename=f"treasury_bulletin_pdfs/{norm_name}.pdf",
+            repo_type="dataset",
+            output_dir=output_dir,
+        )
 
     def get_judge_rubric(self) -> str:
         return OFFICEQA_JUDGE_RUBRIC

@@ -2,7 +2,10 @@
 # Select active profile via CLI `--profile <name>` (defaults to `default_profile`).
 # Outcome paths write under a dedicated directory per bench profile.
 
-default_profile: default
+# Decision-navigated runs are the primary configuration (as for vidore): the
+# DecisionRAG navigator replaces LLM-driven navigation; graph tools remain the
+# fallback path. Override with `-p default` for the pure-LLM navigation baseline.
+default_profile: decision_fast
 dataset_adapter: officeqa.adapter.OfficeQAAdapter
 
 # Shared outcome paths across all bench profiles
@@ -34,7 +37,7 @@ bench_profiles:
       concurrency: 4
 
   decision_fast:
-    description: "DecisionRAG navigator (Clef-flash decision model) + GLM 5.3 Flash synthesis on OfficeQA corpus"
+    description: "DecisionRAG navigator (JEV decision model) + GLM 5.3 Flash synthesis on OfficeQA corpus"
     docgraph_profile: default
     agent_profile: decision
 
@@ -45,9 +48,11 @@ bench_profiles:
       limit: null
 
     runner:
-      # 2: host memory is the binding constraint. At 4 the 2026-11-02 run exhausted
-      # the Ladybug buffer pool after 17/33 questions and wedged on retries.
-      concurrency: 2
+      # 1: host memory is the binding constraint. At 4 the 2026-11-02 run exhausted
+      # the Ladybug buffer pool after 17/33 questions, at 2 the 2026-11-14 run
+      # aborted after 12/39 (pool full at ~7.7GB RSS). Sequential L1 navigation
+      # costs latency, not correctness.
+      concurrency: 1
       folder_id: null
       monitoring: null
 

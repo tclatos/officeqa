@@ -55,6 +55,10 @@ ladybug:
         safe_llm: mistral-small@edenai
         cheap_model: claude-haiku@openrouter
         fast_model: claude-haiku@openrouter
+        # VLM used by the agent-side `query_image` tool (execute_image_query
+        # falls back to this tag when no explicit model is passed). Keep in
+        # sync with docgraph_profiles.default.llms.image.
+        default_vlm: gemini-2.5-flash@openrouter
       cache: sqlite
       cache_path: data/llm_cache/langchain.db
     embeddings:
