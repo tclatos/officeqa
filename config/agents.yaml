@@ -137,7 +137,9 @@ agents:
       full text with relevance scores and a navigation trace.
 
       Read your domain skill `officeqa-qa` (`/custom/officeqa-qa/SKILL.md`) for units, revision rules,
-      statistical formulas and citations, and the `decision-navigation` skill for the navigation discipline.
+      statistical formulas and citations, and the `decision-navigation` skill
+      (`/skills/decision-navigation/SKILL.md`, bundled with genai-graph) for the evidence-pack navigation
+      discipline.
 
       Answering loop:
       1. Call `navigate_folder(query=<the question verbatim>)`. Read the pack's sections and extract the
