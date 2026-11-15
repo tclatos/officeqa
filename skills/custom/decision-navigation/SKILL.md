@@ -38,6 +38,26 @@ full text as an **evidence pack** with per-section relevance scores.
 7. Then follow the `officeqa-qa` skill for units, formulas, `python_interpreter`
    arithmetic and citations.
 
+## Near-ties and edition resolution
+
+A `**Near-tie warning**` in the pack means two or more sections scored within a
+few points of each other — usually near-identical series (revisions, aggregate
+vs component lines) or overlapping editions. Relevance scoring cannot break
+that tie; only the question's wording can. Before computing on any of them:
+
+1. **Resolve the edition binding first.** If the question pins an edition
+   ("According to the September 2011 bulletin"), that edition wins even when
+   newer revisions exist. Only when no edition is pinned, prefer the newest
+   revision covering the target period.
+2. **Quote the exact series label** of each tied candidate and match it against
+   the question's wording (the `officeqa-qa` COLUMN VERIFICATION rule). A table
+   total, an aggregate line, and a component line are three different series.
+3. **Fetch pointers.** If a tied section appears only as a pointer, fetch it
+   with `get_section_content` before deciding — never compare on one side only.
+4. **Re-navigate with `hints` naming the distinction** when two candidates stay
+   plausible (e.g. "need the 'National defense' line, not 'National defense and
+   related activities'").
+
 ## Trace footer
 
 Every pack ends with a `[[navigation-trace]]` JSON footer (decision-model calls,
